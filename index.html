@@ -637,31 +637,39 @@
         }
 
         function saveSettings() {
-            settings.bird.speed = parseFloat(document.getElementById('set-bird-speed').value);
-            settings.bird.margin = parseFloat(document.getElementById('set-bird-margin').value);
-            settings.traffic.lanes = parseInt(document.getElementById('set-traffic-lanes').value);
-            settings.traffic.laneHeight = parseFloat(document.getElementById('set-traffic-laneHeight').value);
-            settings.traffic.baseSpeedMin = parseFloat(document.getElementById('set-traffic-baseSpeedMin').value);
-            settings.traffic.baseSpeedMax = parseFloat(document.getElementById('set-traffic-baseSpeedMax').value);
-            settings.traffic.spawnTimerInitial = parseFloat(document.getElementById('set-traffic-spawnTimerInitial').value);
-            settings.traffic.spawnTimerMin = parseFloat(document.getElementById('set-traffic-spawnTimerMin').value);
-            settings.traffic.difficultyInterval = parseFloat(document.getElementById('set-traffic-difficultyInterval').value);
-            settings.traffic.difficultySpawnReduction = parseFloat(document.getElementById('set-traffic-difficultySpawnReduction').value);
-            settings.physics.poopGravity = parseFloat(document.getElementById('set-physics-poopGravity').value);
-            settings.physics.poopInitialVy = parseFloat(document.getElementById('set-physics-poopInitialVy').value);
-            settings.gameplay.noiseMax = parseFloat(document.getElementById('set-gameplay-noiseMax').value);
-            settings.gameplay.noiseDecay = parseFloat(document.getElementById('set-gameplay-noiseDecay').value);
-            settings.gameplay.noiseIncrease = parseFloat(document.getElementById('set-gameplay-noiseIncrease').value);
-            settings.environment.treeCount = parseInt(document.getElementById('set-environment-treeCount').value);
-            settings.environment.cloudCount = parseInt(document.getElementById('set-environment-cloudCount').value);
-            settings.environment.scrollSpeedRoad = parseFloat(document.getElementById('set-environment-scrollSpeedRoad').value);
-            settings.audio.honkVolume = parseFloat(document.getElementById('set-audio-honkVolume').value);
+            try {
+                console.log('Saving settings...');
+                settings.bird.speed = parseFloat(document.getElementById('set-bird-speed').value) || settings.bird.speed;
+                settings.bird.margin = parseFloat(document.getElementById('set-bird-margin').value) || settings.bird.margin;
+                settings.traffic.lanes = parseInt(document.getElementById('set-traffic-lanes').value) || settings.traffic.lanes;
+                settings.traffic.laneHeight = parseFloat(document.getElementById('set-traffic-laneHeight').value) || settings.traffic.laneHeight;
+                settings.traffic.baseSpeedMin = parseFloat(document.getElementById('set-traffic-baseSpeedMin').value) || settings.traffic.baseSpeedMin;
+                settings.traffic.baseSpeedMax = parseFloat(document.getElementById('set-traffic-baseSpeedMax').value) || settings.traffic.baseSpeedMax;
+                settings.traffic.spawnTimerInitial = parseFloat(document.getElementById('set-traffic-spawnTimerInitial').value) || settings.traffic.spawnTimerInitial;
+                settings.traffic.spawnTimerMin = parseFloat(document.getElementById('set-traffic-spawnTimerMin').value) || settings.traffic.spawnTimerMin;
+                settings.traffic.difficultyInterval = parseFloat(document.getElementById('set-traffic-difficultyInterval').value) || settings.traffic.difficultyInterval;
+                settings.traffic.difficultySpawnReduction = parseFloat(document.getElementById('set-traffic-difficultySpawnReduction').value) || settings.traffic.difficultySpawnReduction;
+                settings.physics.poopGravity = parseFloat(document.getElementById('set-physics-poopGravity').value) || settings.physics.poopGravity;
+                settings.physics.poopInitialVy = parseFloat(document.getElementById('set-physics-poopInitialVy').value) || settings.physics.poopInitialVy;
+                settings.gameplay.noiseMax = parseFloat(document.getElementById('set-gameplay-noiseMax').value) || settings.gameplay.noiseMax;
+                settings.gameplay.noiseDecay = parseFloat(document.getElementById('set-gameplay-noiseDecay').value) || settings.gameplay.noiseDecay;
+                settings.gameplay.noiseIncrease = parseFloat(document.getElementById('set-gameplay-noiseIncrease').value) || settings.gameplay.noiseIncrease;
+                settings.environment.treeCount = parseInt(document.getElementById('set-environment-treeCount').value) || settings.environment.treeCount;
+                settings.environment.cloudCount = parseInt(document.getElementById('set-environment-cloudCount').value) || settings.environment.cloudCount;
+                settings.environment.scrollSpeedRoad = parseFloat(document.getElementById('set-environment-scrollSpeedRoad').value) || settings.environment.scrollSpeedRoad;
+                settings.audio.honkVolume = parseFloat(document.getElementById('set-audio-honkVolume').value) || settings.audio.honkVolume;
 
-            // Re-init environmental elements to reflect changes
-            clouds = [];
-            trees = [];
-            resize();
-            closeSettings();
+                console.log('Settings updated:', settings);
+
+                // Re-init environmental elements to reflect changes
+                clouds = [];
+                trees = [];
+                resize();
+                closeSettings();
+            } catch (e) {
+                console.error('Failed to save settings:', e);
+                alert('Error saving settings. Check console.');
+            }
         }
 
         window.addEventListener('keydown', e => keys[e.code] = true);
@@ -678,6 +686,7 @@
         }
 
         function startGame() {
+            console.log('Starting game...');
             initAudio();
             gameState = 'PLAYING';
             titleScreen.classList.add('hidden');
