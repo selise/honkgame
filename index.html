@@ -382,48 +382,60 @@
                     </div>
                 </div>
                 <!-- Group Traffic -->
+                <div class="setting-group" style="grid-column: span 2;">
+                    <div class="setting-group-title">Traffic & Difficulty</div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div class="input-field"><label>Lanes</label><input type="number" id="set-traffic-lanes"
+                                step="1" min="1" max="10"></div>
+                        <div class="input-field"><label>Lane Height</label><input type="number"
+                                id="set-traffic-laneHeight" step="5"></div>
+                        <div class="input-field"><label>Base Speed Min</label><input type="number"
+                                id="set-traffic-baseSpeedMin" step="0.5"></div>
+                        <div class="input-field"><label>Base Speed Max</label><input type="number"
+                                id="set-traffic-baseSpeedMax" step="0.5"></div>
+                        <div class="input-field"><label>Spawn Delay (Initial)</label><input type="number"
+                                id="set-traffic-spawnTimerInitial" step="100"></div>
+                        <div class="input-field"><label>Spawn Delay (Min)</label><input type="number"
+                                id="set-traffic-spawnTimerMin" step="100"></div>
+                        <div class="input-field"><label>Diff. Increase Int.</label><input type="number"
+                                id="set-traffic-difficultyInterval" step="5"></div>
+                        <div class="input-field"><label>Spawn Reduction</label><input type="number"
+                                id="set-traffic-difficultySpawnReduction" step="10"></div>
+                    </div>
+                </div>
+                <!-- Group Physics -->
                 <div class="setting-group">
-                    <div class="setting-group-title">Traffic</div>
-                    <div class="input-field">
-                        <label>Lanes</label>
-                        <input type="number" id="set-traffic-lanes" step="1" min="1" max="10">
-                    </div>
-                    <div class="input-field">
-                        <label>Lane Height</label>
-                        <input type="number" id="set-traffic-laneHeight" step="5">
-                    </div>
-                    <div class="input-field">
-                        <label>Base Speed (Min)</label>
-                        <input type="number" id="set-traffic-baseSpeedMin" step="0.5">
-                    </div>
-                    <div class="input-field">
-                        <label>Base Speed (Max)</label>
-                        <input type="number" id="set-traffic-baseSpeedMax" step="0.5">
-                    </div>
+                    <div class="setting-group-title">Physics</div>
+                    <div class="input-field"><label>Poop Gravity</label><input type="number"
+                            id="set-physics-poopGravity" step="0.05"></div>
+                    <div class="input-field"><label>Initial Velocity</label><input type="number"
+                            id="set-physics-poopInitialVy" step="0.5"></div>
                 </div>
                 <!-- Group Gameplay -->
                 <div class="setting-group">
                     <div class="setting-group-title">Gameplay</div>
-                    <div class="input-field">
-                        <label>Max Noise</label>
-                        <input type="number" id="set-gameplay-noiseMax" step="10">
-                    </div>
-                    <div class="input-field">
-                        <label>Noise Decay</label>
-                        <input type="number" id="set-gameplay-noiseDecay" step="0.01">
-                    </div>
+                    <div class="input-field"><label>Max Noise</label><input type="number" id="set-gameplay-noiseMax"
+                            step="10"></div>
+                    <div class="input-field"><label>Noise Decay</label><input type="number" id="set-gameplay-noiseDecay"
+                            step="0.01"></div>
+                    <div class="input-field"><label>Noise Incr./Honk</label><input type="number"
+                            id="set-gameplay-noiseIncrease" step="1"></div>
                 </div>
                 <!-- Group Environment -->
                 <div class="setting-group">
                     <div class="setting-group-title">Environment</div>
-                    <div class="input-field">
-                        <label>Tree Count</label>
-                        <input type="number" id="set-environment-treeCount" step="1">
-                    </div>
-                    <div class="input-field">
-                        <label>Cloud Count</label>
-                        <input type="number" id="set-environment-cloudCount" step="1">
-                    </div>
+                    <div class="input-field"><label>Tree Count</label><input type="number"
+                            id="set-environment-treeCount" step="1"></div>
+                    <div class="input-field"><label>Cloud Count</label><input type="number"
+                            id="set-environment-cloudCount" step="1"></div>
+                    <div class="input-field"><label>Road Scroll Spd</label><input type="number"
+                            id="set-environment-scrollSpeedRoad" step="0.5"></div>
+                </div>
+                <!-- Group Audio -->
+                <div class="setting-group">
+                    <div class="setting-group-title">Audio</div>
+                    <div class="input-field"><label>Honk Volume</label><input type="number" id="set-audio-honkVolume"
+                            step="0.01" min="0" max="1"></div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -576,7 +588,9 @@
         window.addEventListener('resize', resize);
 
         async function init() {
+            syncSettingsToUI(); // Initial defaults
             await loadSettings();
+            syncSettingsToUI(); // After JSON load
             resize();
             draw();
         }
@@ -584,19 +598,38 @@
 
         // Settings Editor Logic
         const settingsModal = document.getElementById('settings-modal');
+
+        function syncSettingsToUI() {
+            const map = {
+                'set-bird-speed': settings.bird.speed,
+                'set-bird-margin': settings.bird.margin,
+                'set-traffic-lanes': settings.traffic.lanes,
+                'set-traffic-laneHeight': settings.traffic.laneHeight,
+                'set-traffic-baseSpeedMin': settings.traffic.baseSpeedMin,
+                'set-traffic-baseSpeedMax': settings.traffic.baseSpeedMax,
+                'set-traffic-spawnTimerInitial': settings.traffic.spawnTimerInitial,
+                'set-traffic-spawnTimerMin': settings.traffic.spawnTimerMin,
+                'set-traffic-difficultyInterval': settings.traffic.difficultyInterval,
+                'set-traffic-difficultySpawnReduction': settings.traffic.difficultySpawnReduction,
+                'set-physics-poopGravity': settings.physics.poopGravity,
+                'set-physics-poopInitialVy': settings.physics.poopInitialVy,
+                'set-gameplay-noiseMax': settings.gameplay.noiseMax,
+                'set-gameplay-noiseDecay': settings.gameplay.noiseDecay,
+                'set-gameplay-noiseIncrease': settings.gameplay.noiseIncrease,
+                'set-environment-treeCount': settings.environment.treeCount,
+                'set-environment-cloudCount': settings.environment.cloudCount,
+                'set-environment-scrollSpeedRoad': settings.environment.scrollSpeedRoad,
+                'set-audio-honkVolume': settings.audio.honkVolume
+            };
+            for (let id in map) {
+                const el = document.getElementById(id);
+                if (el) el.value = map[id];
+            }
+        }
+
         function openSettings() {
+            syncSettingsToUI();
             settingsModal.classList.remove('hidden');
-            // Populating inputs
-            document.getElementById('set-bird-speed').value = settings.bird.speed;
-            document.getElementById('set-bird-margin').value = settings.bird.margin;
-            document.getElementById('set-traffic-lanes').value = settings.traffic.lanes;
-            document.getElementById('set-traffic-laneHeight').value = settings.traffic.laneHeight;
-            document.getElementById('set-traffic-baseSpeedMin').value = settings.traffic.baseSpeedMin;
-            document.getElementById('set-traffic-baseSpeedMax').value = settings.traffic.baseSpeedMax;
-            document.getElementById('set-gameplay-noiseMax').value = settings.gameplay.noiseMax;
-            document.getElementById('set-gameplay-noiseDecay').value = settings.gameplay.noiseDecay;
-            document.getElementById('set-environment-treeCount').value = settings.environment.treeCount;
-            document.getElementById('set-environment-cloudCount').value = settings.environment.cloudCount;
         }
 
         function closeSettings() {
@@ -610,10 +643,19 @@
             settings.traffic.laneHeight = parseFloat(document.getElementById('set-traffic-laneHeight').value);
             settings.traffic.baseSpeedMin = parseFloat(document.getElementById('set-traffic-baseSpeedMin').value);
             settings.traffic.baseSpeedMax = parseFloat(document.getElementById('set-traffic-baseSpeedMax').value);
+            settings.traffic.spawnTimerInitial = parseFloat(document.getElementById('set-traffic-spawnTimerInitial').value);
+            settings.traffic.spawnTimerMin = parseFloat(document.getElementById('set-traffic-spawnTimerMin').value);
+            settings.traffic.difficultyInterval = parseFloat(document.getElementById('set-traffic-difficultyInterval').value);
+            settings.traffic.difficultySpawnReduction = parseFloat(document.getElementById('set-traffic-difficultySpawnReduction').value);
+            settings.physics.poopGravity = parseFloat(document.getElementById('set-physics-poopGravity').value);
+            settings.physics.poopInitialVy = parseFloat(document.getElementById('set-physics-poopInitialVy').value);
             settings.gameplay.noiseMax = parseFloat(document.getElementById('set-gameplay-noiseMax').value);
             settings.gameplay.noiseDecay = parseFloat(document.getElementById('set-gameplay-noiseDecay').value);
+            settings.gameplay.noiseIncrease = parseFloat(document.getElementById('set-gameplay-noiseIncrease').value);
             settings.environment.treeCount = parseInt(document.getElementById('set-environment-treeCount').value);
             settings.environment.cloudCount = parseInt(document.getElementById('set-environment-cloudCount').value);
+            settings.environment.scrollSpeedRoad = parseFloat(document.getElementById('set-environment-scrollSpeedRoad').value);
+            settings.audio.honkVolume = parseFloat(document.getElementById('set-audio-honkVolume').value);
 
             // Re-init environmental elements to reflect changes
             clouds = [];
