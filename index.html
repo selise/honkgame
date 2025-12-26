@@ -113,8 +113,8 @@
             transition: opacity 0.5s ease;
         }
 
-        .screen.hidden {
-            display: none;
+        .hidden {
+            display: none !important;
             opacity: 0;
             pointer-events: none;
         }
@@ -659,16 +659,17 @@
                 settings.environment.scrollSpeedRoad = parseFloat(document.getElementById('set-environment-scrollSpeedRoad').value) || settings.environment.scrollSpeedRoad;
                 settings.audio.honkVolume = parseFloat(document.getElementById('set-audio-honkVolume').value) || settings.audio.honkVolume;
 
-                console.log('Settings updated:', settings);
+                console.log('Settings updated successfully');
 
                 // Re-init environmental elements to reflect changes
                 clouds = [];
                 trees = [];
                 resize();
+                draw(); // Refresh title screen background
                 closeSettings();
             } catch (e) {
                 console.error('Failed to save settings:', e);
-                alert('Error saving settings. Check console.');
+                alert('Error saving settings: ' + e.message);
             }
         }
 
