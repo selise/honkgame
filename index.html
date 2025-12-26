@@ -197,6 +197,110 @@
             margin-top: 5px;
             display: block;
         }
+
+        /* Settings Editor Styles */
+        .modal {
+            position: absolute;
+            inset: 10% 20%;
+            background: rgba(20, 20, 20, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            padding: 40px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .modal-body {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 15px;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 25px;
+        }
+
+        .modal-footer {
+            margin-top: 30px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+        }
+
+        .setting-group {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 15px;
+        }
+
+        .setting-group-title {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--primary);
+            margin-bottom: 15px;
+            font-weight: 900;
+        }
+
+        .input-field {
+            margin-bottom: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .input-field label {
+            font-size: 0.75rem;
+            color: #aaa;
+        }
+
+        .input-field input {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 1rem;
+        }
+
+        .input-field input:focus {
+            border-color: var(--primary);
+            outline: none;
+        }
+
+        .btn-small {
+            padding: 10px 25px;
+            font-size: 0.9rem;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            box-shadow: none;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
     </style>
 </head>
 
@@ -247,11 +351,84 @@
             <div id="settings-status"
                 style="margin-top: -30px; margin-bottom: 20px; font-size: 0.8rem; color: #fff; background: rgba(0,0,0,0.4); padding: 5px 15px; border-radius: 20px;">
                 Checking settings...</div>
-            <button class="btn" onclick="startGame()">Start Flight</button>
+            <div style="display: flex; gap: 20px;">
+                <button class="btn" onclick="startGame()">Start Flight</button>
+                <button class="btn btn-secondary" onclick="openSettings()">Settings</button>
+            </div>
             <div class="instructions">
                 <div><span class="instruction-key">W A S D</span> / <span class="instruction-key">&uarr; &larr; &darr;
                         &rarr;</span> Move Bird</div>
                 <div><span class="instruction-key">SPACE</span> Poop on Traffic</div>
+            </div>
+        </div>
+
+        <!-- Settings Modal -->
+        <div id="settings-modal" class="modal hidden">
+            <div class="modal-header">
+                <h2 style="margin:0; color:var(--primary);">Game Settings</h2>
+                <div style="font-size: 0.8rem; opacity: 0.6;">Apply changes before starting flight</div>
+            </div>
+            <div class="modal-body" id="settings-editor-fields">
+                <!-- Group Bird -->
+                <div class="setting-group">
+                    <div class="setting-group-title">Bird</div>
+                    <div class="input-field">
+                        <label>Speed</label>
+                        <input type="number" id="set-bird-speed" step="1">
+                    </div>
+                    <div class="input-field">
+                        <label>Screen Margin</label>
+                        <input type="number" id="set-bird-margin" step="5">
+                    </div>
+                </div>
+                <!-- Group Traffic -->
+                <div class="setting-group">
+                    <div class="setting-group-title">Traffic</div>
+                    <div class="input-field">
+                        <label>Lanes</label>
+                        <input type="number" id="set-traffic-lanes" step="1" min="1" max="10">
+                    </div>
+                    <div class="input-field">
+                        <label>Lane Height</label>
+                        <input type="number" id="set-traffic-laneHeight" step="5">
+                    </div>
+                    <div class="input-field">
+                        <label>Base Speed (Min)</label>
+                        <input type="number" id="set-traffic-baseSpeedMin" step="0.5">
+                    </div>
+                    <div class="input-field">
+                        <label>Base Speed (Max)</label>
+                        <input type="number" id="set-traffic-baseSpeedMax" step="0.5">
+                    </div>
+                </div>
+                <!-- Group Gameplay -->
+                <div class="setting-group">
+                    <div class="setting-group-title">Gameplay</div>
+                    <div class="input-field">
+                        <label>Max Noise</label>
+                        <input type="number" id="set-gameplay-noiseMax" step="10">
+                    </div>
+                    <div class="input-field">
+                        <label>Noise Decay</label>
+                        <input type="number" id="set-gameplay-noiseDecay" step="0.01">
+                    </div>
+                </div>
+                <!-- Group Environment -->
+                <div class="setting-group">
+                    <div class="setting-group-title">Environment</div>
+                    <div class="input-field">
+                        <label>Tree Count</label>
+                        <input type="number" id="set-environment-treeCount" step="1">
+                    </div>
+                    <div class="input-field">
+                        <label>Cloud Count</label>
+                        <input type="number" id="set-environment-cloudCount" step="1">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-small btn-secondary" onclick="closeSettings()">Cancel</button>
+                <button class="btn btn-small" onclick="saveSettings()">Save Changes</button>
             </div>
         </div>
 
@@ -404,6 +581,46 @@
             draw();
         }
         init();
+
+        // Settings Editor Logic
+        const settingsModal = document.getElementById('settings-modal');
+        function openSettings() {
+            settingsModal.classList.remove('hidden');
+            // Populating inputs
+            document.getElementById('set-bird-speed').value = settings.bird.speed;
+            document.getElementById('set-bird-margin').value = settings.bird.margin;
+            document.getElementById('set-traffic-lanes').value = settings.traffic.lanes;
+            document.getElementById('set-traffic-laneHeight').value = settings.traffic.laneHeight;
+            document.getElementById('set-traffic-baseSpeedMin').value = settings.traffic.baseSpeedMin;
+            document.getElementById('set-traffic-baseSpeedMax').value = settings.traffic.baseSpeedMax;
+            document.getElementById('set-gameplay-noiseMax').value = settings.gameplay.noiseMax;
+            document.getElementById('set-gameplay-noiseDecay').value = settings.gameplay.noiseDecay;
+            document.getElementById('set-environment-treeCount').value = settings.environment.treeCount;
+            document.getElementById('set-environment-cloudCount').value = settings.environment.cloudCount;
+        }
+
+        function closeSettings() {
+            settingsModal.classList.add('hidden');
+        }
+
+        function saveSettings() {
+            settings.bird.speed = parseFloat(document.getElementById('set-bird-speed').value);
+            settings.bird.margin = parseFloat(document.getElementById('set-bird-margin').value);
+            settings.traffic.lanes = parseInt(document.getElementById('set-traffic-lanes').value);
+            settings.traffic.laneHeight = parseFloat(document.getElementById('set-traffic-laneHeight').value);
+            settings.traffic.baseSpeedMin = parseFloat(document.getElementById('set-traffic-baseSpeedMin').value);
+            settings.traffic.baseSpeedMax = parseFloat(document.getElementById('set-traffic-baseSpeedMax').value);
+            settings.gameplay.noiseMax = parseFloat(document.getElementById('set-gameplay-noiseMax').value);
+            settings.gameplay.noiseDecay = parseFloat(document.getElementById('set-gameplay-noiseDecay').value);
+            settings.environment.treeCount = parseInt(document.getElementById('set-environment-treeCount').value);
+            settings.environment.cloudCount = parseInt(document.getElementById('set-environment-cloudCount').value);
+
+            // Re-init environmental elements to reflect changes
+            clouds = [];
+            trees = [];
+            resize();
+            closeSettings();
+        }
 
         window.addEventListener('keydown', e => keys[e.code] = true);
         window.addEventListener('keyup', e => keys[e.code] = false);
