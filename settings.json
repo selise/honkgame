@@ -1,0 +1,42 @@
+{
+    "bird": {
+        "speed": 7,
+        "size": 22,
+        "margin": 50
+    },
+    "physics": {
+        "poopGravity": 0.2,
+        "poopInitialVy": 2,
+        "poopDetectionRadius": 10
+    },
+    "traffic": {
+        "lanes": 3,
+        "laneHeight": 50,
+        "roadY": 0.75,
+        "baseSpeedMin": 3,
+        "baseSpeedMax": 6,
+        "spawnTimerInitial": 2000,
+        "spawnTimerMin": 600,
+        "difficultySpawnReduction": 150,
+        "jamDistance": 150,
+        "slowDownFactor": 0.8,
+        "difficultyInterval": 15
+    },
+    "audio": {
+        "honkVolume": 0.04,
+        "honkChanceNormal": 0.002,
+        "honkChanceJam": 0.02
+    },
+    "gameplay": {
+        "noiseMax": 100,
+        "noiseDecay": 0.05,
+        "noiseIncrease": 2
+    },
+    "environment": {
+        "cloudSpeedMin": 0.2,
+        "cloudSpeedMax": 0.7,
+        "scrollSpeedRoad": 2,
+        "treeCount": 10,
+        "cloudCount": 8
+    }
+}

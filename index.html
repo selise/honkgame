@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poop Patrol: Horizontal Horizon</title>
+    <style>
+        :root {
+            --primary: #FFD700;
+            --danger: #FF4D4D;
+            --success: #4CAF50;
+            --sky: #87CEEB;
+            --glass: rgba(255, 255, 255, 0.1);
+        }
+
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--sky);
+            color: white;
+            user-select: none;
+        }
+
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&display=swap');
+
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(to bottom, #4facfe 0%, #00f2fe 100%);
+        }
+
+        canvas {
+            image-rendering: optimizeSpeed;
+        }
+
+        .ui-overlay {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .stats-panel {
+            background: var(--glass);
+            backdrop-filter: blur(10px);
+            padding: 15px 25px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .stat-item {
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .stat-label {
+            font-weight: 700;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #eee;
+        }
+
+        .stat-value {
+            font-size: 1.4rem;
+            font-weight: 900;
+            color: var(--primary);
+        }
+
+        .noise-meter-container {
+            width: 200px;
+            height: 12px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        #noise-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--success), var(--primary), var(--danger));
+            transition: width 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .screen {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            z-index: 20;
+            transition: opacity 0.5s ease;
+        }
+
+        .screen.hidden {
+            display: none;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        h1 {
+            font-size: 5rem;
+            margin: 0;
+            font-weight: 900;
+            text-align: center;
+            color: white;
+            text-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+            font-style: italic;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: #fff;
+            margin-bottom: 40px;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+        }
+
+        .btn {
+            background: var(--primary);
+            color: black;
+            border: none;
+            padding: 18px 45px;
+            font-size: 1.5rem;
+            font-weight: 900;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            box-shadow: 0 10px 25px rgba(255, 215, 0, 0.4);
+        }
+
+        .btn:hover {
+            transform: scale(1.1) translateY(-5px);
+            box-shadow: 0 15px 35px rgba(255, 215, 0, 0.6);
+        }
+
+        .instructions {
+            margin-top: 40px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px 40px;
+            border-radius: 20px;
+            display: flex;
+            gap: 30px;
+            color: #fff;
+        }
+
+        .instruction-key {
+            background: #fff;
+            padding: 5px 12px;
+            border-radius: 8px;
+            color: #333;
+            font-weight: 700;
+            margin-right: 5px;
+            box-shadow: 0 3px 0 #999;
+        }
+
+        #game-over-screen h2 {
+            font-size: 3rem;
+            color: white;
+            text-shadow: 0 0 20px var(--danger);
+            margin-bottom: 10px;
+        }
+
+        .final-stats {
+            margin: 30px 0;
+            text-align: center;
+            font-size: 1.5rem;
+        }
+
+        .high-score-tag {
+            color: var(--primary);
+            font-weight: 900;
+            margin-top: 5px;
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="game-container">
+        <canvas id="gameCanvas"></canvas>
+
+        <!-- UI Overlay -->
+        <div id="game-ui" class="ui-overlay hidden">
+            <div class="stats-panel left">
+                <div class="stat-item">
+                    <span class="stat-label">Noise Level</span>
+                    <div class="noise-meter-container">
+                        <div id="noise-fill"></div>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Time Survived</span>
+                    <span id="time-val" class="stat-value">0s</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Poops Dropped</span>
+                    <span id="poop-val" class="stat-value">0</span>
+                </div>
+            </div>
+            <div class="stats-panel right">
+                <div class="stat-item">
+                    <span class="stat-label">Cars Silenced</span>
+                    <span id="silenced-val" class="stat-value">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Difficulty</span>
+                    <span id="difficulty-val" class="stat-value">Lv 1</span>
+                </div>
+                <div class="stat-item"
+                    style="margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 5px;">
+                    <span class="stat-label">Best</span>
+                    <span id="highscore-val" class="stat-value" style="font-size: 1.1rem; color: #fff;">0s</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Title Screen -->
+        <div id="title-screen" class="screen">
+            <h1>POOP PATROL</h1>
+            <div class="subtitle">Horizontal Poopage</div>
+            <div id="settings-status"
+                style="margin-top: -30px; margin-bottom: 20px; font-size: 0.8rem; color: #fff; background: rgba(0,0,0,0.4); padding: 5px 15px; border-radius: 20px;">
+                Checking settings...</div>
+            <button class="btn" onclick="startGame()">Start Flight</button>
+            <div class="instructions">
+                <div><span class="instruction-key">W A S D</span> / <span class="instruction-key">&uarr; &larr; &darr;
+                        &rarr;</span> Move Bird</div>
+                <div><span class="instruction-key">SPACE</span> Poop on Traffic</div>
+            </div>
+        </div>
+
+        <!-- Game Over Screen -->
+        <div id="game-over-screen" class="screen hidden">
+            <h2>GAME OVER!</h2>
+            <div class="subtitle">The honking was too much!</div>
+            <div class="final-stats">
+                You survived for <span id="final-time" style="color:var(--primary); font-weight:900;">0</span> seconds.
+                <div id="new-highscore" class="high-score-tag hidden">NEW HIGH SCORE!</div>
+            </div>
+            <button class="btn" onclick="startGame()">Fly Again</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const ui = document.getElementById('game-ui');
+        const titleScreen = document.getElementById('title-screen');
+        const gameOverScreen = document.getElementById('game-over-screen');
+
+        // UI elements
+        const noiseFill = document.getElementById('noise-fill');
+        const timeVal = document.getElementById('time-val');
+        const poopVal = document.getElementById('poop-val');
+        const silencedVal = document.getElementById('silenced-val');
+        const difficultyVal = document.getElementById('difficulty-val');
+        const highscoreVal = document.getElementById('highscore-val');
+        const finalTime = document.getElementById('final-time');
+        const newHighscoreTag = document.getElementById('new-highscore');
+
+        // Game Configuration (Default fallbacks)
+        let settings = {
+            bird: { speed: 7, size: 22, margin: 50 },
+            physics: { poopGravity: 0.2, poopInitialVy: 2, poopDetectionRadius: 10 },
+            traffic: { lanes: 3, laneHeight: 50, roadY: 0.75, baseSpeedMin: 3, baseSpeedMax: 6, spawnTimerInitial: 2000, spawnTimerMin: 600, difficultySpawnReduction: 150, jamDistance: 150, slowDownFactor: 0.8, difficultyInterval: 15 },
+            audio: { honkVolume: 0.04, honkChanceNormal: 0.002, honkChanceJam: 0.02 },
+            gameplay: { noiseMax: 100, noiseDecay: 0.05, noiseIncrease: 2 },
+            environment: { cloudSpeedMin: 0.2, cloudSpeedMax: 0.7, scrollSpeedRoad: 2, treeCount: 10, cloudCount: 8 }
+        };
+
+        async function loadSettings() {
+            const statusEl = document.getElementById('settings-status');
+            try {
+                const response = await fetch('settings.json');
+                if (response.ok) {
+                    const newSettings = await response.json();
+                    // Merge settings
+                    for (let key in newSettings) {
+                        if (typeof settings[key] === 'object' && !Array.isArray(settings[key])) {
+                            settings[key] = { ...settings[key], ...newSettings[key] };
+                        } else {
+                            settings[key] = newSettings[key];
+                        }
+                    }
+                    if (statusEl) {
+                        statusEl.innerText = '✓ Settings Loaded from JSON';
+                        statusEl.style.color = '#4CAF50';
+                    }
+                    console.log('Settings loaded successfully');
+                } else {
+                    throw new Error('Response not OK');
+                }
+            } catch (e) {
+                console.warn('Could not load settings.json. Using defaults.', e);
+                if (statusEl) {
+                    if (window.location.protocol === 'file:') {
+                        statusEl.innerText = '⚠ Local File (CORS) - Using Default Settings';
+                        statusEl.style.color = '#FF9800';
+                    } else {
+                        statusEl.innerText = '⚠ JSON Load Failed - Using Default Settings';
+                        statusEl.style.color = '#f44336';
+                    }
+                }
+            }
+        }
+
+        // Audio Context
+        let audioCtx;
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playHonk(type = 'default') {
+            if (!audioCtx) return;
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            const freq = type === 'truck' ? 120 : (type === 'ambulance' ? 440 : 220);
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            if (type === 'ambulance') osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.2);
+            gain.gain.setValueAtTime(settings.audio.honkVolume, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.15);
+        }
+
+        // Game State
+        let gameState = 'TITLE';
+        let noiseLevel = 0;
+        let timeSeconds = 0;
+        let poopsDropped = 0;
+        let carsSilenced = 0;
+        let difficulty = 1;
+        let highscore = localStorage.getItem('pooppatrol_highscore_horiz') || 0;
+        highscoreVal.innerText = highscore + 's';
+
+        // World Objects
+        let bird = { x: 200, y: 150, wings: 0 };
+        let vehicles = [];
+        let poops = [];
+        let splats = [];
+        let clouds = [];
+        let trees = [];
+        let keys = {};
+        let lastTime = 0;
+        let spawnTimer = 0;
+        let frameCount = 0;
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            // Re-init env if empty
+            if (clouds.length === 0) {
+                for (let i = 0; i < settings.environment.cloudCount; i++)
+                    clouds.push({
+                        x: Math.random() * canvas.width,
+                        y: Math.random() * canvas.height * 0.5,
+                        s: 0.5 + Math.random() * 1,
+                        speed: settings.environment.cloudSpeedMin + Math.random() * (settings.environment.cloudSpeedMax - settings.environment.cloudSpeedMin)
+                    });
+                for (let i = 0; i < settings.environment.treeCount; i++)
+                    trees.push({
+                        x: Math.random() * canvas.width,
+                        y: canvas.height * settings.traffic.roadY - 20,
+                        s: 0.8 + Math.random() * 0.5
+                    });
+            }
+        }
+        window.addEventListener('resize', resize);
+
+        async function init() {
+            await loadSettings();
+            resize();
+            draw();
+        }
+        init();
+
+        window.addEventListener('keydown', e => keys[e.code] = true);
+        window.addEventListener('keyup', e => keys[e.code] = false);
+        window.addEventListener('keypress', e => {
+            if (e.code === 'Space' && gameState === 'PLAYING') dropPoop();
+        });
+
+        function resetGame() {
+            noiseLevel = 0; timeSeconds = 0; poopsDropped = 0; carsSilenced = 0; difficulty = 1;
+            vehicles = []; poops = []; splats = []; frameCount = 0;
+            bird.y = 150; bird.x = 200;
+            lastTime = performance.now();
+        }
+
+        function startGame() {
+            initAudio();
+            gameState = 'PLAYING';
+            titleScreen.classList.add('hidden');
+            gameOverScreen.classList.add('hidden');
+            ui.classList.remove('hidden');
+            resetGame();
+            requestAnimationFrame(gameLoop);
+        }
+
+        function gameOver() {
+            gameState = 'GAMEOVER';
+            ui.classList.add('hidden');
+            gameOverScreen.classList.remove('hidden');
+            finalTime.innerText = Math.floor(timeSeconds);
+            if (timeSeconds > highscore) {
+                highscore = Math.floor(timeSeconds);
+                localStorage.setItem('pooppatrol_highscore_horiz', highscore);
+                highscoreVal.innerText = highscore + 's';
+                newHighscoreTag.classList.remove('hidden');
+            } else {
+                newHighscoreTag.classList.add('hidden');
+            }
+        }
+
+        function dropPoop() {
+            poops.push({ x: bird.x, y: bird.y, vy: settings.physics.poopInitialVy });
+            poopsDropped++;
+            poopVal.innerText = poopsDropped;
+        }
+
+        function spawnVehicle() {
+            const lane = Math.floor(Math.random() * settings.traffic.lanes);
+            const y = (canvas.height * settings.traffic.roadY) + (lane * settings.traffic.laneHeight) + settings.traffic.laneHeight / 2;
+            const types = ['car', 'taxi', 'truck', 'ambulance'];
+            const type = types[Math.floor(Math.random() * types.length)];
+            const colors = ['#f44336', '#2196F3', '#4CAF50', '#FF9800', '#9C27B0'];
+            const color = type === 'taxi' ? '#FFD700' : colors[Math.floor(Math.random() * colors.length)];
+
+            vehicles.push({
+                id: Math.random(),
+                x: -200,
+                y: y,
+                lane: lane,
+                type: type,
+                color: color,
+                baseSpeed: (settings.traffic.baseSpeedMin + Math.random() * (settings.traffic.baseSpeedMax - settings.traffic.baseSpeedMin)) * (1 + (difficulty - 1) * 0.1),
+                speed: 0,
+                shake: 0,
+                pooped: false,
+                width: type === 'truck' ? 120 : 80,
+                height: type === 'truck' ? 50 : 40
+            });
+        }
+
+        function update(dt) {
+            if (gameState !== 'PLAYING') return;
+            frameCount++;
+            timeSeconds += dt / 1000;
+            timeVal.innerText = Math.floor(timeSeconds) + 's';
+
+            if (Math.floor(timeSeconds) > difficulty * settings.traffic.difficultyInterval) {
+                difficulty++;
+                difficultyVal.innerText = 'Lv ' + difficulty;
+            }
+
+            // Bird
+            if (keys['ArrowUp'] || keys['KeyW']) bird.y -= settings.bird.speed;
+            if (keys['ArrowDown'] || keys['KeyS']) bird.y += settings.bird.speed;
+            if (keys['ArrowLeft'] || keys['KeyA']) bird.x -= settings.bird.speed;
+            if (keys['ArrowRight'] || keys['KeyD']) bird.x += settings.bird.speed;
+            bird.x = Math.max(settings.bird.margin, Math.min(canvas.width - settings.bird.margin, bird.x));
+            bird.y = Math.max(settings.bird.margin, Math.min(canvas.height * settings.traffic.roadY - settings.bird.margin, bird.y));
+            bird.wings = Math.sin(frameCount * 0.2);
+
+            // Env
+            clouds.forEach(c => {
+                c.x -= c.speed;
+                if (c.x < -200) c.x = canvas.width + 100;
+            });
+            trees.forEach(t => {
+                t.x -= settings.environment.scrollSpeedRoad;
+                if (t.x < -100) t.x = canvas.width + 50;
+            });
+
+            // Vehicles
+            spawnTimer -= dt;
+            if (spawnTimer <= 0) {
+                spawnVehicle();
+                spawnTimer = Math.max(settings.traffic.spawnTimerMin, settings.traffic.spawnTimerInitial - (difficulty * settings.traffic.difficultySpawnReduction));
+            }
+
+            for (let i = vehicles.length - 1; i >= 0; i--) {
+                const v = vehicles[i];
+                let targetSpeed = v.baseSpeed;
+                for (let j = 0; j < vehicles.length; j++) {
+                    const other = vehicles[j];
+                    if (v === other) continue;
+                    if (v.lane === other.lane && other.x > v.x && other.x - v.x < settings.traffic.jamDistance) {
+                        targetSpeed = other.speed * settings.traffic.slowDownFactor;
+                        break;
+                    }
+                }
+                v.speed += (targetSpeed - v.speed) * 0.05;
+                v.x += v.speed;
+
+                if (!v.pooped) {
+                    let honkChance = v.speed < v.baseSpeed * 0.8 ? settings.audio.honkChanceJam : settings.audio.honkChanceNormal;
+                    if (Math.random() < honkChance) {
+                        v.shake = 10;
+                        noiseLevel += settings.gameplay.noiseIncrease;
+                        playHonk(v.type);
+                    }
+                }
+                if (v.shake > 0) v.shake *= 0.85;
+
+                // Poop collision
+                for (let p = poops.length - 1; p >= 0; p--) {
+                    const poop = poops[p];
+                    if (Math.abs(poop.x - v.x) < v.width / 2 && Math.abs(poop.y - v.y) < v.height / 2 + settings.physics.poopDetectionRadius) {
+                        if (!v.pooped) {
+                            v.pooped = true;
+                            carsSilenced++;
+                            silencedVal.innerText = carsSilenced;
+                            splats.push({ vId: v.id, lx: poop.x - v.x, ly: poop.y - v.y, s: 20 + Math.random() * 10 });
+                        }
+                        poops.splice(p, 1);
+                    }
+                }
+                if (v.x > canvas.width + 200) {
+                    splats = splats.filter(s => s.vId !== v.id);
+                    vehicles.splice(i, 1);
+                }
+            }
+
+            // Poops
+            for (let i = poops.length - 1; i >= 0; i--) {
+                poops[i].y += poops[i].vy;
+                poops[i].vy += settings.physics.poopGravity;
+                if (poops[i].y > canvas.height) poops.splice(i, 1);
+            }
+
+            noiseLevel = Math.max(0, noiseLevel - settings.gameplay.noiseDecay);
+            noiseFill.style.width = Math.min(100, noiseLevel) + '%';
+            if (noiseLevel >= settings.gameplay.noiseMax) gameOver();
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Clouds
+            ctx.fillStyle = 'rgba(255,255,255,0.7)';
+            clouds.forEach(c => {
+                ctx.beginPath();
+                ctx.ellipse(c.x, c.y, 40 * c.s, 20 * c.s, 0, 0, Math.PI * 2);
+                ctx.ellipse(c.x + 30 * c.s, c.y + 10 * c.s, 30 * c.s, 15 * c.s, 0, 0, Math.PI * 2);
+                ctx.ellipse(c.x - 30 * c.s, c.y + 10 * c.s, 30 * c.s, 15 * c.s, 0, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // Road
+            const roadY = canvas.height * settings.traffic.roadY;
+            const totalHeight = settings.traffic.lanes * settings.traffic.laneHeight;
+            ctx.fillStyle = '#444';
+            ctx.fillRect(0, roadY, canvas.width, totalHeight);
+
+            ctx.strokeStyle = '#666';
+            ctx.setLineDash([40, 40]);
+            ctx.lineDashOffset = frameCount * 5;
+            ctx.lineWidth = 4;
+            for (let i = 1; i < settings.traffic.lanes; i++) {
+                const ly = roadY + (i * settings.traffic.laneHeight);
+                ctx.beginPath(); ctx.moveTo(0, ly); ctx.lineTo(canvas.width, ly); ctx.stroke();
+            }
+            ctx.setLineDash([]);
+
+            // Trees
+            trees.forEach(t => {
+                ctx.fillStyle = '#4e342e';
+                ctx.fillRect(t.x, t.y - 20, 10 * t.s, 30 * t.s);
+                ctx.fillStyle = '#2e7d32';
+                ctx.beginPath();
+                ctx.arc(t.x + 5 * t.s, t.y - 30, 20 * t.s, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // Vehicles
+            vehicles.forEach(v => {
+                ctx.save();
+                ctx.translate(v.x, v.y + Math.sin(frameCount) * v.shake * 0.5);
+                ctx.fillStyle = v.color;
+                roundRect(ctx, -v.width / 2, -v.height / 2, v.width, v.height, 8, true);
+                ctx.fillStyle = v.color;
+                ctx.beginPath();
+                ctx.moveTo(-v.width * 0.2, -v.height / 2);
+                ctx.lineTo(0, -v.height * 0.8);
+                ctx.lineTo(v.width * 0.4, -v.height * 0.8);
+                ctx.lineTo(v.width * 0.5, -v.height / 2);
+                ctx.fill();
+                ctx.fillStyle = '#000';
+                ctx.beginPath(); ctx.arc(-v.width * 0.3, v.height / 2, 8, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.arc(v.width * 0.3, v.height / 2, 8, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = 'rgba(0,0,0,0.4)';
+                ctx.fillRect(-v.width * 0.1, -v.height * 0.7, v.width * 0.2, v.height * 0.2);
+                ctx.fillRect(v.width * 0.15, -v.height * 0.7, v.width * 0.2, v.height * 0.2);
+                ctx.fillStyle = '#fff'; ctx.fillRect(v.width / 2 - 5, -v.height / 2 + 5, 5, 10);
+                ctx.fillStyle = '#f00'; ctx.fillRect(-v.width / 2, -v.height / 2 + 5, 5, 10);
+                splats.filter(s => s.vId === v.id).forEach(s => {
+                    ctx.fillStyle = 'rgba(255,255,255,0.85)';
+                    ctx.beginPath(); ctx.arc(s.lx, s.ly, s.s / 2, 0, Math.PI * 2); ctx.fill();
+                });
+                ctx.restore();
+            });
+
+            // Poops
+            poops.forEach(p => {
+                ctx.fillStyle = '#6d4c41';
+                ctx.beginPath(); ctx.arc(p.x, p.y, 10, 0, Math.PI * 2); ctx.fill();
+            });
+
+            // Bird (Side view)
+            ctx.save();
+            ctx.translate(bird.x, bird.y);
+            ctx.fillStyle = '#fff';
+            const wingY = bird.wings * 20;
+            ctx.beginPath();
+            ctx.ellipse(0, 0, 20, 10 + Math.abs(wingY), 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#FFD700';
+            ctx.beginPath(); ctx.ellipse(0, 0, 22, 14, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(10, -5, 3, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#FFA500';
+            ctx.beginPath(); ctx.moveTo(18, -4); ctx.lineTo(32, 0); ctx.lineTo(18, 4); ctx.fill();
+            ctx.restore();
+        }
+
+        function roundRect(ctx, x, y, width, height, radius, fill) {
+            ctx.beginPath();
+            ctx.moveTo(x + radius, y);
+            ctx.lineTo(x + width - radius, y);
+            ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+            ctx.lineTo(x + width, y + height - radius);
+            ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+            ctx.lineTo(x + radius, y + height);
+            ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+            ctx.lineTo(x, y + radius);
+            ctx.quadraticCurveTo(x, y, x + radius, y);
+            ctx.closePath();
+            if (fill) ctx.fill();
+        }
+
+        function gameLoop(now) {
+            if (gameState !== 'PLAYING') return;
+            update(now - lastTime);
+            lastTime = now;
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+    </script>
+</body>
+
+</html>
