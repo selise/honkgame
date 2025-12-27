@@ -323,7 +323,11 @@
                     <span id="time-val" class="stat-value">0s</span>
                 </div>
                 <div class="stat-item">
-                    <span class="stat-label">Poops Dropped</span>
+                    <span class="stat-label">STOCKS</span>
+                    <span id="inventory-val" class="stat-value">100</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">POOPS</span>
                     <span id="poop-val" class="stat-value">0</span>
                 </div>
             </div>
@@ -437,6 +441,24 @@
                     <div class="input-field"><label>Honk Volume</label><input type="number" id="set-audio-honkVolume"
                             step="0.01" min="0" max="1"></div>
                 </div>
+                <!-- Group Food -->
+                <div class="setting-group" style="grid-column: span 2;">
+                    <div class="setting-group-title">Flying Food</div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
+                        <div class="input-field"><label>Spawn Min (ms)</label><input type="number"
+                                id="set-food-spawnTimerMin" step="100"></div>
+                        <div class="input-field"><label>Spawn Max (ms)</label><input type="number"
+                                id="set-food-spawnTimerMax" step="100"></div>
+                        <div class="input-field"><label>Speed Min</label><input type="number" id="set-food-speedMin"
+                                step="0.5"></div>
+                        <div class="input-field"><label>Speed Max</label><input type="number" id="set-food-speedMax"
+                                step="0.5"></div>
+                        <div class="input-field"><label>Gravity Incr.</label><input type="number"
+                                id="set-food-gravityIncrease" step="0.01"></div>
+                        <div class="input-field"><label>Food Size</label><input type="number" id="set-food-size"
+                                step="5"></div>
+                    </div>
+                </div>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-small btn-secondary" onclick="closeSettings()">Cancel</button>
@@ -467,6 +489,7 @@
         const noiseFill = document.getElementById('noise-fill');
         const timeVal = document.getElementById('time-val');
         const poopVal = document.getElementById('poop-val');
+        const inventoryVal = document.getElementById('inventory-val');
         const silencedVal = document.getElementById('silenced-val');
         const difficultyVal = document.getElementById('difficulty-val');
         const highscoreVal = document.getElementById('highscore-val');
@@ -480,7 +503,8 @@
             traffic: { lanes: 3, laneHeight: 50, roadY: 0.75, baseSpeedMin: 3, baseSpeedMax: 6, spawnTimerInitial: 2000, spawnTimerMin: 600, difficultySpawnReduction: 150, jamDistance: 150, slowDownFactor: 0.8, difficultyInterval: 15 },
             audio: { honkVolume: 0.04, honkChanceNormal: 0.002, honkChanceJam: 0.02 },
             gameplay: { noiseMax: 100, noiseDecay: 0.05, noiseIncrease: 2 },
-            environment: { cloudSpeedMin: 0.2, cloudSpeedMax: 0.7, scrollSpeedRoad: 2, treeCount: 10, cloudCount: 8 }
+            environment: { cloudSpeedMin: 0.2, cloudSpeedMax: 0.7, scrollSpeedRoad: 2, treeCount: 10, cloudCount: 8 },
+            food: { spawnTimerMin: 1500, spawnTimerMax: 4000, speedMin: 2, speedMax: 5, gravityIncrease: 0.05, size: 30 }
         };
 
         async function loadSettings() {
@@ -547,6 +571,7 @@
         let noiseLevel = 0;
         let timeSeconds = 0;
         let poopsDropped = 0;
+        let poopInventory = 100;
         let carsSilenced = 0;
         let difficulty = 1;
         let highscore = localStorage.getItem('pooppatrol_highscore_horiz') || 0;
@@ -559,9 +584,35 @@
         let splats = [];
         let clouds = [];
         let trees = [];
+        let foods = [];
+        let foodImages = {};
+        let foodFiles = ['apple.png', 'burger.png', 'carrot.png', 'cherry.png', 'egg.png', 'fries.png', 'ham.png', 'pizza.png', 'strawberry.png', 'sushi.png', 'watermelon.png'];
+
+        const dropImages = {};
+        const dropFiles = {
+            'down': 'droppingdown.png',
+            'car': 'landoncar.png'
+        };
+
+        function preloadImages() {
+            // Food
+            foodFiles.forEach(file => {
+                const img = new Image();
+                img.src = `assets/visuals/food/${file}`;
+                foodImages[file] = img;
+            });
+            // Drops
+            for (let key in dropFiles) {
+                const img = new Image();
+                img.src = `assets/visuals/drops/${dropFiles[key]}`;
+                dropImages[key] = img;
+            }
+        }
+
         let keys = {};
         let lastTime = 0;
         let spawnTimer = 0;
+        let foodSpawnTimer = 0;
         let frameCount = 0;
 
         function resize() {
@@ -588,6 +639,7 @@
         window.addEventListener('resize', resize);
 
         async function init() {
+            preloadImages();
             syncSettingsToUI(); // Initial defaults
             await loadSettings();
             syncSettingsToUI(); // After JSON load
@@ -619,7 +671,13 @@
                 'set-environment-treeCount': settings.environment.treeCount,
                 'set-environment-cloudCount': settings.environment.cloudCount,
                 'set-environment-scrollSpeedRoad': settings.environment.scrollSpeedRoad,
-                'set-audio-honkVolume': settings.audio.honkVolume
+                'set-audio-honkVolume': settings.audio.honkVolume,
+                'set-food-spawnTimerMin': settings.food.spawnTimerMin,
+                'set-food-spawnTimerMax': settings.food.spawnTimerMax,
+                'set-food-speedMin': settings.food.speedMin,
+                'set-food-speedMax': settings.food.speedMax,
+                'set-food-gravityIncrease': settings.food.gravityIncrease,
+                'set-food-size': settings.food.size
             };
             for (let id in map) {
                 const el = document.getElementById(id);
@@ -659,6 +717,13 @@
                 settings.environment.scrollSpeedRoad = parseFloat(document.getElementById('set-environment-scrollSpeedRoad').value) || settings.environment.scrollSpeedRoad;
                 settings.audio.honkVolume = parseFloat(document.getElementById('set-audio-honkVolume').value) || settings.audio.honkVolume;
 
+                settings.food.spawnTimerMin = parseFloat(document.getElementById('set-food-spawnTimerMin').value) || settings.food.spawnTimerMin;
+                settings.food.spawnTimerMax = parseFloat(document.getElementById('set-food-spawnTimerMax').value) || settings.food.spawnTimerMax;
+                settings.food.speedMin = parseFloat(document.getElementById('set-food-speedMin').value) || settings.food.speedMin;
+                settings.food.speedMax = parseFloat(document.getElementById('set-food-speedMax').value) || settings.food.speedMax;
+                settings.food.gravityIncrease = parseFloat(document.getElementById('set-food-gravityIncrease').value) || settings.food.gravityIncrease;
+                settings.food.size = parseFloat(document.getElementById('set-food-size').value) || settings.food.size;
+
                 console.log('Settings updated successfully');
 
                 // Re-init environmental elements to reflect changes
@@ -676,14 +741,26 @@
         window.addEventListener('keydown', e => keys[e.code] = true);
         window.addEventListener('keyup', e => keys[e.code] = false);
         window.addEventListener('keypress', e => {
-            if (e.code === 'Space' && gameState === 'PLAYING') dropPoop();
+            if (e.code === 'Space' && gameState === 'PLAYING') {
+                if (poopInventory > 0) {
+                    poops.push({ x: bird.x, y: bird.y, vy: settings.physics.poopInitialVy, image: dropImages['down'] });
+                    poopsDropped++;
+                    poopInventory--;
+                    poopVal.innerText = poopsDropped;
+                    inventoryVal.innerText = poopInventory;
+                    playHonk('shoot');
+                }
+            }
         });
 
         function resetGame() {
-            noiseLevel = 0; timeSeconds = 0; poopsDropped = 0; carsSilenced = 0; difficulty = 1;
-            vehicles = []; poops = []; splats = []; frameCount = 0;
+            noiseLevel = 0; timeSeconds = 0; poopsDropped = 0; poopInventory = 100; carsSilenced = 0; difficulty = 1;
+            vehicles = []; poops = []; splats = []; foods = []; frameCount = 0;
+            poopVal.innerText = '0';
+            inventoryVal.innerText = '100';
             bird.y = 150; bird.x = 200;
             lastTime = performance.now();
+            foodSpawnTimer = settings.food.spawnTimerMin + Math.random() * (settings.food.spawnTimerMax - settings.food.spawnTimerMin);
         }
 
         function startGame() {
@@ -712,6 +789,7 @@
             }
         }
 
+        // The original dropPoop function is no longer called by keypress, but kept for reference or other uses.
         function dropPoop() {
             poops.push({ x: bird.x, y: bird.y, vy: settings.physics.poopInitialVy });
             poopsDropped++;
@@ -738,7 +816,20 @@
                 shake: 0,
                 pooped: false,
                 width: type === 'truck' ? 120 : 80,
-                height: type === 'truck' ? 50 : 40
+                height: type === 'truck' ? 50 : 40,
+                vy: 0,
+                angle: 0
+            });
+        }
+
+        function spawnFood() {
+            const file = foodFiles[Math.floor(Math.random() * foodFiles.length)];
+            foods.push({
+                x: canvas.width + 100,
+                y: 50 + Math.random() * (canvas.height * settings.traffic.roadY - 100),
+                speed: settings.food.speedMin + Math.random() * (settings.food.speedMax - settings.food.speedMin),
+                image: foodImages[file],
+                size: settings.food.size
             });
         }
 
@@ -772,6 +863,35 @@
                 if (t.x < -100) t.x = canvas.width + 50;
             });
 
+            // Food Spawning
+            foodSpawnTimer -= dt;
+            if (foodSpawnTimer <= 0) {
+                spawnFood();
+                foodSpawnTimer = settings.food.spawnTimerMin + Math.random() * (settings.food.spawnTimerMax - settings.food.spawnTimerMin);
+            }
+
+            // Food Movement and Collision
+            for (let i = foods.length - 1; i >= 0; i--) {
+                const f = foods[i];
+                f.x -= f.speed;
+
+                // Bird Collision
+                const dx = bird.x - f.x;
+                const dy = bird.y - f.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < 30) {
+                    if (settings.food && settings.food.gravityIncrease) {
+                        settings.physics.poopGravity += settings.food.gravityIncrease;
+                    }
+                    poopInventory += 10;
+                    inventoryVal.innerText = poopInventory;
+                    foods.splice(i, 1);
+                    continue;
+                }
+
+                if (f.x < -100) foods.splice(i, 1);
+            }
+
             // Vehicles
             spawnTimer -= dt;
             if (spawnTimer <= 0) {
@@ -782,12 +902,19 @@
             for (let i = vehicles.length - 1; i >= 0; i--) {
                 const v = vehicles[i];
                 let targetSpeed = v.baseSpeed;
-                for (let j = 0; j < vehicles.length; j++) {
-                    const other = vehicles[j];
-                    if (v === other) continue;
-                    if (v.lane === other.lane && other.x > v.x && other.x - v.x < settings.traffic.jamDistance) {
-                        targetSpeed = other.speed * settings.traffic.slowDownFactor;
-                        break;
+                if (v.pooped) {
+                    v.vy += 0.2;
+                    v.y += v.vy;
+                    v.angle += 0.02;
+                    targetSpeed = v.speed * 0.98;
+                } else {
+                    for (let j = 0; j < vehicles.length; j++) {
+                        const other = vehicles[j];
+                        if (v === other || other.pooped) continue;
+                        if (v.lane === other.lane && other.x > v.x && other.x - v.x < settings.traffic.jamDistance) {
+                            targetSpeed = other.speed * settings.traffic.slowDownFactor;
+                            break;
+                        }
                     }
                 }
                 v.speed += (targetSpeed - v.speed) * 0.05;
@@ -811,12 +938,12 @@
                             v.pooped = true;
                             carsSilenced++;
                             silencedVal.innerText = carsSilenced;
-                            splats.push({ vId: v.id, lx: poop.x - v.x, ly: poop.y - v.y, s: 20 + Math.random() * 10 });
+                            splats.push({ vId: v.id, lx: poop.x - v.x, ly: poop.y - v.y, s: 30 + Math.random() * 10, image: dropImages['car'] });
                         }
                         poops.splice(p, 1);
                     }
                 }
-                if (v.x > canvas.width + 200) {
+                if (v.x > canvas.width + 200 || v.y > canvas.height + 200) {
                     splats = splats.filter(s => s.vId !== v.id);
                     vehicles.splice(i, 1);
                 }
@@ -877,6 +1004,7 @@
             vehicles.forEach(v => {
                 ctx.save();
                 ctx.translate(v.x, v.y + Math.sin(frameCount) * v.shake * 0.5);
+                ctx.rotate(v.angle);
                 ctx.fillStyle = v.color;
                 roundRect(ctx, -v.width / 2, -v.height / 2, v.width, v.height, 8, true);
                 ctx.fillStyle = v.color;
@@ -895,16 +1023,28 @@
                 ctx.fillStyle = '#fff'; ctx.fillRect(v.width / 2 - 5, -v.height / 2 + 5, 5, 10);
                 ctx.fillStyle = '#f00'; ctx.fillRect(-v.width / 2, -v.height / 2 + 5, 5, 10);
                 splats.filter(s => s.vId === v.id).forEach(s => {
-                    ctx.fillStyle = 'rgba(255,255,255,0.85)';
-                    ctx.beginPath(); ctx.arc(s.lx, s.ly, s.s / 2, 0, Math.PI * 2); ctx.fill();
+                    if (s.image && s.image.complete) {
+                        ctx.drawImage(s.image, s.lx - s.s / 2, s.ly - s.s / 2, s.s, s.s);
+                    }
                 });
                 ctx.restore();
             });
 
+            // Food
+            foods.forEach(f => {
+                if (f.image && f.image.complete) {
+                    ctx.drawImage(f.image, f.x - f.size / 2, f.y - f.size / 2, f.size, f.size);
+                }
+            });
+
             // Poops
             poops.forEach(p => {
-                ctx.fillStyle = '#6d4c41';
-                ctx.beginPath(); ctx.arc(p.x, p.y, 10, 0, Math.PI * 2); ctx.fill();
+                if (p.image && p.image.complete) {
+                    ctx.drawImage(p.image, p.x - 10, p.y - 10, 20, 20);
+                } else {
+                    ctx.fillStyle = '#6d4c41';
+                    ctx.beginPath(); ctx.arc(p.x, p.y, 10, 0, Math.PI * 2); ctx.fill();
+                }
             });
 
             // Bird (Side view)

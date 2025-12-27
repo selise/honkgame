@@ -10,7 +10,7 @@
         "poopDetectionRadius": 10
     },
     "traffic": {
-        "lanes": 3,
+        "lanes": 5,
         "laneHeight": 50,
         "roadY": 0.75,
         "baseSpeedMin": 3,
@@ -38,5 +38,13 @@
         "scrollSpeedRoad": 2,
         "treeCount": 10,
         "cloudCount": 8
+    },
+    "food": {
+        "spawnTimerMin": 1500,
+        "spawnTimerMax": 4000,
+        "speedMin": 2,
+        "speedMax": 5,
+        "gravityIncrease": 0.05,
+        "size": 30
     }
 }
