@@ -589,10 +589,15 @@
         let foodFiles = ['apple.png', 'burger.png', 'carrot.png', 'cherry.png', 'egg.png', 'fries.png', 'ham.png', 'pizza.png', 'strawberry.png', 'sushi.png', 'watermelon.png'];
 
         const dropImages = {};
-        const dropFiles = {
-            'down': 'droppingdown.png',
-            'car': 'landoncar.png'
+        const dropFiles = { 'down': 'droppingdown.png', 'car': 'landoncar.png' };
+
+        const vehicleSprites = {
+            bus: ['bus_left_01.png', 'bus_left_02.png', 'bus_right_01.png', 'bus_right_02.png', 'bus_right_03.png', 'bus_right_04.png'],
+            car: ['car_left_01.png', 'car_left_02.png', 'car_left_03.png', 'car_left_04.png', 'car_left_05.png', 'car_left_06.png', 'car_left_07.png', 'car_left_08.png', 'car_left_09.png', 'car_left_10.png', 'car_right_01.png', 'car_right_02.png', 'car_right_03.png', 'car_right_04.png', 'car_right_05.png', 'car_right_06.png', 'car_right_07.png', 'car_right_08.png'],
+            emergency: ['emergency_left_01.png', 'emergency_left_02.png', 'emergency_left_03.png', 'emergency_right_01.png', 'emergency_right_02.png', 'emergency_right_03.png', 'emergency_right_04.png', 'emergency_right_05.png'],
+            truck: ['truck_left_01.png', 'truck_left_02.png', 'truck_right_01.png', 'truck_right_02.png', 'truck_right_03.png']
         };
+        const vehicleImages = { bus: [], car: [], emergency: [], truck: [] };
 
         function preloadImages() {
             // Food
@@ -606,6 +611,14 @@
                 const img = new Image();
                 img.src = `assets/visuals/drops/${dropFiles[key]}`;
                 dropImages[key] = img;
+            }
+            // Vehicles
+            for (let cat in vehicleSprites) {
+                vehicleSprites[cat].forEach(file => {
+                    const img = new Image();
+                    img.src = `assets/visuals/vehicles/${cat}_sprites/${file}`;
+                    vehicleImages[cat].push({ img, file });
+                });
             }
         }
 
@@ -799,24 +812,24 @@
         function spawnVehicle() {
             const lane = Math.floor(Math.random() * settings.traffic.lanes);
             const y = (canvas.height * settings.traffic.roadY) + (lane * settings.traffic.laneHeight) + settings.traffic.laneHeight / 2;
-            const types = ['car', 'taxi', 'truck', 'ambulance'];
-            const type = types[Math.floor(Math.random() * types.length)];
-            const colors = ['#f44336', '#2196F3', '#4CAF50', '#FF9800', '#9C27B0'];
-            const color = type === 'taxi' ? '#FFD700' : colors[Math.floor(Math.random() * colors.length)];
+            const categories = ['car', 'bus', 'emergency', 'truck'];
+            const cat = categories[Math.floor(Math.random() * categories.length)];
+            const spriteData = vehicleImages[cat][Math.floor(Math.random() * vehicleImages[cat].length)];
 
             vehicles.push({
                 id: Math.random(),
                 x: -200,
                 y: y,
                 lane: lane,
-                type: type,
-                color: color,
+                type: cat,
+                image: spriteData.img,
+                flipped: spriteData.file.includes('_left_'),
                 baseSpeed: (settings.traffic.baseSpeedMin + Math.random() * (settings.traffic.baseSpeedMax - settings.traffic.baseSpeedMin)) * (1 + (difficulty - 1) * 0.1),
                 speed: 0,
                 shake: 0,
                 pooped: false,
-                width: type === 'truck' ? 120 : 80,
-                height: type === 'truck' ? 50 : 40,
+                width: cat === 'truck' || cat === 'bus' ? 120 : 80,
+                height: cat === 'truck' || cat === 'bus' ? 50 : 40,
                 vy: 0,
                 angle: 0
             });
@@ -1005,23 +1018,16 @@
                 ctx.save();
                 ctx.translate(v.x, v.y + Math.sin(frameCount) * v.shake * 0.5);
                 ctx.rotate(v.angle);
-                ctx.fillStyle = v.color;
-                roundRect(ctx, -v.width / 2, -v.height / 2, v.width, v.height, 8, true);
-                ctx.fillStyle = v.color;
-                ctx.beginPath();
-                ctx.moveTo(-v.width * 0.2, -v.height / 2);
-                ctx.lineTo(0, -v.height * 0.8);
-                ctx.lineTo(v.width * 0.4, -v.height * 0.8);
-                ctx.lineTo(v.width * 0.5, -v.height / 2);
-                ctx.fill();
-                ctx.fillStyle = '#000';
-                ctx.beginPath(); ctx.arc(-v.width * 0.3, v.height / 2, 8, 0, Math.PI * 2); ctx.fill();
-                ctx.beginPath(); ctx.arc(v.width * 0.3, v.height / 2, 8, 0, Math.PI * 2); ctx.fill();
-                ctx.fillStyle = 'rgba(0,0,0,0.4)';
-                ctx.fillRect(-v.width * 0.1, -v.height * 0.7, v.width * 0.2, v.height * 0.2);
-                ctx.fillRect(v.width * 0.15, -v.height * 0.7, v.width * 0.2, v.height * 0.2);
-                ctx.fillStyle = '#fff'; ctx.fillRect(v.width / 2 - 5, -v.height / 2 + 5, 5, 10);
-                ctx.fillStyle = '#f00'; ctx.fillRect(-v.width / 2, -v.height / 2 + 5, 5, 10);
+                if (v.flipped) ctx.scale(-1, 1);
+
+                if (v.image && v.image.complete) {
+                    ctx.drawImage(v.image, -v.width / 2, -v.height / 2, v.width, v.height);
+                } else {
+                    ctx.fillStyle = '#999';
+                    roundRect(ctx, -v.width / 2, -v.height / 2, v.width, v.height, 8, true);
+                }
+
+                if (v.flipped) ctx.scale(-1, 1); // Flip back for splats
                 splats.filter(s => s.vId === v.id).forEach(s => {
                     if (s.image && s.image.complete) {
                         ctx.drawImage(s.image, s.lx - s.s / 2, s.ly - s.s / 2, s.s, s.s);
