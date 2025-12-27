@@ -1068,7 +1068,7 @@
             ctx.translate(bird.x, bird.y);
             const currentFrame = birdFrames[bird.frame];
             if (currentFrame && currentFrame.complete) {
-                const size = 100; // Adjust size as needed
+                const size = 60; // Reduced to 60% of original 100
                 ctx.drawImage(currentFrame, -size / 2, -size / 2, size, size);
             } else {
                 // Fallback
