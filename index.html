@@ -578,7 +578,7 @@
         highscoreVal.innerText = highscore + 's';
 
         // World Objects
-        let bird = { x: 200, y: 150, wings: 0 };
+        let bird = { x: 200, y: 150, frame: 0, wings: 0 };
         let vehicles = [];
         let poops = [];
         let splats = [];
@@ -598,6 +598,9 @@
             truck: ['truck_left_01.png', 'truck_left_02.png', 'truck_right_01.png', 'truck_right_02.png', 'truck_right_03.png']
         };
         const vehicleImages = { bus: [], car: [], emergency: [], truck: [] };
+
+        const birdFrames = [];
+        const birdFiles = ['bird1.png', 'bird2.png', 'bird3.png', 'bird4.png'];
 
         function preloadImages() {
             // Food
@@ -620,6 +623,12 @@
                     vehicleImages[cat].push({ img, file });
                 });
             }
+            // Bird
+            birdFiles.forEach(file => {
+                const img = new Image();
+                img.src = `assets/visuals/bird_flying/${file}`;
+                birdFrames.push(img);
+            });
         }
 
         let keys = {};
@@ -865,6 +874,7 @@
             bird.x = Math.max(settings.bird.margin, Math.min(canvas.width - settings.bird.margin, bird.x));
             bird.y = Math.max(settings.bird.margin, Math.min(canvas.height * settings.traffic.roadY - settings.bird.margin, bird.y));
             bird.wings = Math.sin(frameCount * 0.2);
+            bird.frame = Math.floor(frameCount / 5) % 4; // Cycle through 4 frames every 5 game frames
 
             // Env
             clouds.forEach(c => {
@@ -1053,19 +1063,26 @@
                 }
             });
 
-            // Bird (Side view)
+            // Bird (Image view)
             ctx.save();
             ctx.translate(bird.x, bird.y);
-            ctx.fillStyle = '#fff';
-            const wingY = bird.wings * 20;
-            ctx.beginPath();
-            ctx.ellipse(0, 0, 20, 10 + Math.abs(wingY), 0, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.fillStyle = '#FFD700';
-            ctx.beginPath(); ctx.ellipse(0, 0, 22, 14, 0, 0, Math.PI * 2); ctx.fill();
-            ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(10, -5, 3, 0, Math.PI * 2); ctx.fill();
-            ctx.fillStyle = '#FFA500';
-            ctx.beginPath(); ctx.moveTo(18, -4); ctx.lineTo(32, 0); ctx.lineTo(18, 4); ctx.fill();
+            const currentFrame = birdFrames[bird.frame];
+            if (currentFrame && currentFrame.complete) {
+                const size = 100; // Adjust size as needed
+                ctx.drawImage(currentFrame, -size / 2, -size / 2, size, size);
+            } else {
+                // Fallback
+                ctx.fillStyle = '#fff';
+                const wingY = bird.wings * 20;
+                ctx.beginPath();
+                ctx.ellipse(0, 0, 20, 10 + Math.abs(wingY), 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#FFD700';
+                ctx.beginPath(); ctx.ellipse(0, 0, 22, 14, 0, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(10, -5, 3, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = '#FFA500';
+                ctx.beginPath(); ctx.moveTo(18, -4); ctx.lineTo(32, 0); ctx.lineTo(18, 4); ctx.fill();
+            }
             ctx.restore();
         }
 
