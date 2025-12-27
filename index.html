@@ -100,6 +100,95 @@
             transition: width 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
+        /* Minimal HUD */
+        .minimal-hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .minimal-hud .stats-panel {
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .minimal-hud .stat-item {
+            margin-bottom: 0;
+        }
+
+        /* Dynamic Notifications */
+        #notification-container {
+            position: absolute;
+            top: 100px;
+            left: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .notification {
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(5px);
+            padding: 8px 15px;
+            border-radius: 10px;
+            border-left: 4px solid var(--primary);
+            color: white;
+            font-weight: 700;
+            font-size: 0.9rem;
+            animation: slideIn 0.3s ease-out, fadeOut 0.5s ease-in 2s forwards;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .notification.poop {
+            border-left-color: #6d4c41;
+        }
+
+        .notification.stock {
+            border-left-color: var(--success);
+        }
+
+        .notification.silenced {
+            border-left-color: var(--danger);
+        }
+
+        .notification.level {
+            border-left-color: #9c27b0;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(-20px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+            }
+
+            to {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+        }
+
         .screen {
             position: absolute;
             inset: 0;
@@ -186,9 +275,35 @@
         }
 
         .final-stats {
-            margin: 30px 0;
+            margin: 20px 0;
             text-align: center;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            min-width: 300px;
+        }
+
+        .final-stat-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .final-stat-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #aaa;
+        }
+
+        .final-stat-value {
             font-size: 1.5rem;
+            font-weight: 900;
+            color: var(--primary);
         }
 
         .high-score-tag {
@@ -309,44 +424,23 @@
     <div id="game-container">
         <canvas id="gameCanvas"></canvas>
 
-        <!-- UI Overlay -->
-        <div id="game-ui" class="ui-overlay hidden">
-            <div class="stats-panel left">
+        <!-- UI Overlay (Minimal) -->
+        <div id="game-ui" class="minimal-hud hidden">
+            <div class="stats-panel">
                 <div class="stat-item">
-                    <span class="stat-label">Noise Level</span>
-                    <div class="noise-meter-container">
+                    <span class="stat-label">Noise</span>
+                    <div class="noise-meter-container" style="width: 120px;">
                         <div id="noise-fill"></div>
                     </div>
                 </div>
                 <div class="stat-item">
-                    <span class="stat-label">Time Survived</span>
                     <span id="time-val" class="stat-value">0s</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-label">STOCKS</span>
-                    <span id="inventory-val" class="stat-value">100</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-label">POOPS</span>
-                    <span id="poop-val" class="stat-value">0</span>
-                </div>
-            </div>
-            <div class="stats-panel right">
-                <div class="stat-item">
-                    <span class="stat-label">Cars Silenced</span>
-                    <span id="silenced-val" class="stat-value">0</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-label">Difficulty</span>
-                    <span id="difficulty-val" class="stat-value">Lv 1</span>
-                </div>
-                <div class="stat-item"
-                    style="margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 5px;">
-                    <span class="stat-label">Best</span>
-                    <span id="highscore-val" class="stat-value" style="font-size: 1.1rem; color: #fff;">0s</span>
                 </div>
             </div>
         </div>
+
+        <!-- Dynamic Notifications -->
+        <div id="notification-container"></div>
 
         <!-- Title Screen -->
         <div id="title-screen" class="screen">
@@ -468,12 +562,34 @@
 
         <!-- Game Over Screen -->
         <div id="game-over-screen" class="screen hidden">
-            <h2>GAME OVER!</h2>
+            <h2 style="margin-bottom: 5px;">GAME OVER!</h2>
             <div class="subtitle">The honking was too much!</div>
+
             <div class="final-stats">
-                You survived for <span id="final-time" style="color:var(--primary); font-weight:900;">0</span> seconds.
-                <div id="new-highscore" class="high-score-tag hidden">NEW HIGH SCORE!</div>
+                <div class="final-stat-item">
+                    <span class="final-stat-label">Time Survived</span>
+                    <span id="final-time" class="final-stat-value">0s</span>
+                </div>
+                <div class="final-stat-item">
+                    <span class="final-stat-label">Cars Silenced</span>
+                    <span id="final-silenced" class="final-stat-value">0</span>
+                </div>
+                <div class="final-stat-item">
+                    <span class="final-stat-label">Poops Dropped</span>
+                    <span id="final-poops" class="final-stat-value">0</span>
+                </div>
+                <div class="final-stat-item">
+                    <span class="final-stat-label">Final Level</span>
+                    <span id="final-level" class="final-stat-value">Lv 1</span>
+                </div>
+                <div class="final-stat-item"
+                    style="grid-column: span 2; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
+                    <span class="final-stat-label">Personal Best</span>
+                    <span id="final-best" class="final-stat-value" style="font-size: 1.2rem;">0s</span>
+                </div>
             </div>
+
+            <div id="new-highscore" class="high-score-tag hidden" style="margin-bottom: 20px;">NEW HIGH SCORE!</div>
             <button class="btn" onclick="startGame()">Fly Again</button>
         </div>
     </div>
@@ -488,13 +604,14 @@
         // UI elements
         const noiseFill = document.getElementById('noise-fill');
         const timeVal = document.getElementById('time-val');
-        const poopVal = document.getElementById('poop-val');
-        const inventoryVal = document.getElementById('inventory-val');
-        const silencedVal = document.getElementById('silenced-val');
-        const difficultyVal = document.getElementById('difficulty-val');
         const highscoreVal = document.getElementById('highscore-val');
         const finalTime = document.getElementById('final-time');
+        const finalSilenced = document.getElementById('final-silenced');
+        const finalPoops = document.getElementById('final-poops');
+        const finalLevel = document.getElementById('final-level');
+        const finalBest = document.getElementById('final-best');
         const newHighscoreTag = document.getElementById('new-highscore');
+        const notificationContainer = document.getElementById('notification-container');
 
         // Game Configuration (Default fallbacks)
         let settings = {
@@ -545,10 +662,37 @@
 
         // Audio Context
         let audioCtx;
-        function initAudio() {
+        const soundBuffers = {};
+
+        async function loadSound(name, url) {
+            try {
+                const response = await fetch(url);
+                const arrayBuffer = await response.arrayBuffer();
+                const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+                soundBuffers[name] = audioBuffer;
+                console.log(`Sound loaded: ${name}`);
+            } catch (e) {
+                console.error(`Failed to load sound ${name}:`, e);
+            }
+        }
+
+        async function initAudio() {
             if (!audioCtx) {
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                // Preload sounds
+                loadSound('poopdrop', 'assets/sounds/effects/poopdrop.wav');
+                loadSound('poopland', 'assets/sounds/effects/poopland.wav');
+                loadSound('powerup', 'assets/sounds/effects/powerup.wav');
             }
+        }
+
+        function playSound(name) {
+            if (!audioCtx || !soundBuffers[name]) return;
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const source = audioCtx.createBufferSource();
+            source.buffer = soundBuffers[name];
+            source.connect(audioCtx.destination);
+            source.start(0);
         }
 
         function playHonk(type = 'default') {
@@ -575,7 +719,14 @@
         let carsSilenced = 0;
         let difficulty = 1;
         let highscore = localStorage.getItem('pooppatrol_highscore_horiz') || 0;
-        highscoreVal.innerText = highscore + 's';
+
+        function showNotification(text, type) {
+            const el = document.createElement('div');
+            el.className = `notification ${type}`;
+            el.innerHTML = `<span>${text}</span>`;
+            notificationContainer.appendChild(el);
+            setTimeout(() => el.remove(), 2500);
+        }
 
         // World Objects
         let bird = { x: 200, y: 150, frame: 0, wings: 0 };
@@ -768,9 +919,11 @@
                     poops.push({ x: bird.x, y: bird.y, vy: settings.physics.poopInitialVy, image: dropImages['down'] });
                     poopsDropped++;
                     poopInventory--;
-                    poopVal.innerText = poopsDropped;
-                    inventoryVal.innerText = poopInventory;
-                    playHonk('shoot');
+                    // poopVal.innerText = poopsDropped; // No longer persistent
+                    // inventoryVal.innerText = poopInventory; // No longer persistent
+                    if (poopsDropped % 10 === 0) showNotification(`${poopsDropped} Poops Dropped!`, 'poop');
+                    if (poopInventory <= 5) showNotification(`LOW STOCKS: ${poopInventory}`, 'stock');
+                    playSound('poopdrop');
                 }
             }
         });
@@ -778,8 +931,7 @@
         function resetGame() {
             noiseLevel = 0; timeSeconds = 0; poopsDropped = 0; poopInventory = 100; carsSilenced = 0; difficulty = 1;
             vehicles = []; poops = []; splats = []; foods = []; frameCount = 0;
-            poopVal.innerText = '0';
-            inventoryVal.innerText = '100';
+            notificationContainer.innerHTML = '';
             bird.y = 150; bird.x = 200;
             lastTime = performance.now();
             foodSpawnTimer = settings.food.spawnTimerMin + Math.random() * (settings.food.spawnTimerMax - settings.food.spawnTimerMin);
@@ -800,22 +952,26 @@
             gameState = 'GAMEOVER';
             ui.classList.add('hidden');
             gameOverScreen.classList.remove('hidden');
-            finalTime.innerText = Math.floor(timeSeconds);
+
+            finalTime.innerText = Math.floor(timeSeconds) + 's';
+            finalSilenced.innerText = carsSilenced;
+            finalPoops.innerText = poopsDropped;
+            finalLevel.innerText = 'Lv ' + difficulty;
+
             if (timeSeconds > highscore) {
                 highscore = Math.floor(timeSeconds);
                 localStorage.setItem('pooppatrol_highscore_horiz', highscore);
-                highscoreVal.innerText = highscore + 's';
                 newHighscoreTag.classList.remove('hidden');
             } else {
                 newHighscoreTag.classList.add('hidden');
             }
+            finalBest.innerText = highscore + 's';
         }
 
         // The original dropPoop function is no longer called by keypress, but kept for reference or other uses.
         function dropPoop() {
             poops.push({ x: bird.x, y: bird.y, vy: settings.physics.poopInitialVy });
             poopsDropped++;
-            poopVal.innerText = poopsDropped;
         }
 
         function spawnVehicle() {
@@ -863,7 +1019,7 @@
 
             if (Math.floor(timeSeconds) > difficulty * settings.traffic.difficultyInterval) {
                 difficulty++;
-                difficultyVal.innerText = 'Lv ' + difficulty;
+                showNotification(`LEVEL UP: ${difficulty}`, 'level');
             }
 
             // Bird
@@ -907,7 +1063,8 @@
                         settings.physics.poopGravity += settings.food.gravityIncrease;
                     }
                     poopInventory += 10;
-                    inventoryVal.innerText = poopInventory;
+                    showNotification(`+10 STOCKS! (${poopInventory})`, 'stock');
+                    playSound('powerup');
                     foods.splice(i, 1);
                     continue;
                 }
@@ -960,8 +1117,9 @@
                         if (!v.pooped) {
                             v.pooped = true;
                             carsSilenced++;
-                            silencedVal.innerText = carsSilenced;
+                            showNotification(`Silenced! (${carsSilenced})`, 'silenced');
                             splats.push({ vId: v.id, lx: poop.x - v.x, ly: poop.y - v.y, s: 30 + Math.random() * 10, image: dropImages['car'] });
+                            playSound('poopland');
                         }
                         poops.splice(p, 1);
                     }
@@ -976,7 +1134,10 @@
             for (let i = poops.length - 1; i >= 0; i--) {
                 poops[i].y += poops[i].vy;
                 poops[i].vy += settings.physics.poopGravity;
-                if (poops[i].y > canvas.height) poops.splice(i, 1);
+                if (poops[i].y > canvas.height) {
+                    playSound('poopland');
+                    poops.splice(i, 1);
+                }
             }
 
             noiseLevel = Math.max(0, noiseLevel - settings.gameplay.noiseDecay);
