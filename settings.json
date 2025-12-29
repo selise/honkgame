@@ -10,11 +10,11 @@
         "poopDetectionRadius": 10
     },
     "traffic": {
-        "lanes": 5,
+        "lanes": 3,
         "laneHeight": 50,
         "roadY": 0.75,
-        "baseSpeedMin": 3,
-        "baseSpeedMax": 6,
+        "baseSpeedMin": 1,
+        "baseSpeedMax": 10,
         "spawnTimerInitial": 2000,
         "spawnTimerMin": 600,
         "difficultySpawnReduction": 150,
@@ -35,9 +35,13 @@
     "environment": {
         "cloudSpeedMin": 0.2,
         "cloudSpeedMax": 0.7,
-        "scrollSpeedRoad": 2,
+        "scrollSpeedRoad": 5,
         "treeCount": 10,
-        "cloudCount": 8
+        "shopCount": 5,
+        "commercialCount": 3,
+        "cloudCount": 20,
+        "silhouetteCount": 15,
+        "silhouetteSize": 1
     },
     "food": {
         "spawnTimerMin": 1500,

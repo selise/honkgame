@@ -484,50 +484,65 @@
                     <div class="setting-group-title">Traffic & Difficulty</div>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                         <div class="input-field"><label>Lanes</label><input type="number" id="set-traffic-lanes"
-                                step="1" min="1" max="10"></div>
+                                value="3" step="1" min="1" max="10"></div>
                         <div class="input-field"><label>Lane Height</label><input type="number"
-                                id="set-traffic-laneHeight" step="5"></div>
+                                id="set-traffic-laneHeight" value="50" step="5"></div>
                         <div class="input-field"><label>Base Speed Min</label><input type="number"
-                                id="set-traffic-baseSpeedMin" step="0.5"></div>
+                                id="set-traffic-baseSpeedMin" value="1" step="0.5"></div>
                         <div class="input-field"><label>Base Speed Max</label><input type="number"
-                                id="set-traffic-baseSpeedMax" step="0.5"></div>
+                                id="set-traffic-baseSpeedMax" value="10" step="0.5"></div>
                         <div class="input-field"><label>Spawn Delay (Initial)</label><input type="number"
-                                id="set-traffic-spawnTimerInitial" step="100"></div>
+                                id="set-traffic-spawnTimerInitial" value="2000" step="100"></div>
                         <div class="input-field"><label>Spawn Delay (Min)</label><input type="number"
-                                id="set-traffic-spawnTimerMin" step="100"></div>
+                                id="set-traffic-spawnTimerMin" value="600" step="100"></div>
                         <div class="input-field"><label>Diff. Increase Int.</label><input type="number"
-                                id="set-traffic-difficultyInterval" step="5"></div>
+                                id="set-traffic-difficultyInterval" value="15" step="5"></div>
                         <div class="input-field"><label>Spawn Reduction</label><input type="number"
-                                id="set-traffic-difficultySpawnReduction" step="10"></div>
+                                id="set-traffic-difficultySpawnReduction" value="150" step="10"></div>
                     </div>
                 </div>
                 <!-- Group Physics -->
                 <div class="setting-group">
                     <div class="setting-group-title">Physics</div>
                     <div class="input-field"><label>Poop Gravity</label><input type="number"
-                            id="set-physics-poopGravity" step="0.05"></div>
+                            id="set-physics-poopGravity" value="0.2" step="0.05"></div>
                     <div class="input-field"><label>Initial Velocity</label><input type="number"
-                            id="set-physics-poopInitialVy" step="0.5"></div>
+                            id="set-physics-poopInitialVy" value="2" step="0.5"></div>
                 </div>
                 <!-- Group Gameplay -->
                 <div class="setting-group">
                     <div class="setting-group-title">Gameplay</div>
                     <div class="input-field"><label>Max Noise</label><input type="number" id="set-gameplay-noiseMax"
-                            step="10"></div>
+                            value="100" step="10"></div>
                     <div class="input-field"><label>Noise Decay</label><input type="number" id="set-gameplay-noiseDecay"
-                            step="0.01"></div>
+                            value="0.05" step="0.01"></div>
                     <div class="input-field"><label>Noise Incr./Honk</label><input type="number"
-                            id="set-gameplay-noiseIncrease" step="1"></div>
+                            id="set-gameplay-noiseIncrease" value="2" step="1"></div>
                 </div>
                 <!-- Group Environment -->
                 <div class="setting-group">
                     <div class="setting-group-title">Environment</div>
                     <div class="input-field"><label>Tree Count</label><input type="number"
-                            id="set-environment-treeCount" step="1"></div>
+                            id="set-environment-treeCount" value="10" step="1"></div>
+                    <div class="input-field"><label>Shop Count</label><input type="number"
+                            id="set-environment-shopCount" value="5" step="1"></div>
+                    <div class="input-field"><label>Comm. Count</label><input type="number"
+                            id="set-environment-commercialCount" value="3" step="1"></div>
                     <div class="input-field"><label>Cloud Count</label><input type="number"
-                            id="set-environment-cloudCount" step="1"></div>
+                            id="set-environment-cloudCount" value="20" step="1"></div>
+                    <div class="input-field"><label>Silhouette Count</label><input type="number"
+                            id="set-environment-silhouetteCount" step="1"></div>
                     <div class="input-field"><label>Road Scroll Spd</label><input type="number"
                             id="set-environment-scrollSpeedRoad" step="0.5"></div>
+                    <div class="input-field" style="grid-column: span 3;">
+                        <label>Background</label>
+                        <select id="set-environment-background"
+                            style="width:100%; background:rgba(0,0,0,0.3); color:white; border:1px solid rgba(255,255,255,0.1); padding:8px; border-radius:8px;">
+                            <option value="none">None (Gradient)</option>
+                            <option value="300ft">300ft View</option>
+                            <option value="desert">Desert View</option>
+                        </select>
+                    </div>
                 </div>
                 <!-- Group Audio -->
                 <div class="setting-group">
@@ -617,10 +632,10 @@
         let settings = {
             bird: { speed: 7, size: 22, margin: 50 },
             physics: { poopGravity: 0.2, poopInitialVy: 2, poopDetectionRadius: 10 },
-            traffic: { lanes: 3, laneHeight: 50, roadY: 0.75, baseSpeedMin: 3, baseSpeedMax: 6, spawnTimerInitial: 2000, spawnTimerMin: 600, difficultySpawnReduction: 150, jamDistance: 150, slowDownFactor: 0.8, difficultyInterval: 15 },
+            traffic: { lanes: 3, laneHeight: 50, roadY: 0.75, baseSpeedMin: 1, baseSpeedMax: 10, spawnTimerInitial: 2000, spawnTimerMin: 600, difficultySpawnReduction: 150, jamDistance: 150, slowDownFactor: 0.8, difficultyInterval: 15 },
             audio: { honkVolume: 0.04, honkChanceNormal: 0.002, honkChanceJam: 0.02 },
             gameplay: { noiseMax: 100, noiseDecay: 0.05, noiseIncrease: 2 },
-            environment: { cloudSpeedMin: 0.2, cloudSpeedMax: 0.7, scrollSpeedRoad: 2, treeCount: 10, cloudCount: 8 },
+            environment: { cloudSpeedMin: 0.2, cloudSpeedMax: 0.7, scrollSpeedRoad: 5, treeCount: 6, shopCount: 5, commercialCount: 3, cloudCount: 20, silhouetteCount: 15, silhouetteSize: 1, background: 'none' },
             food: { spawnTimerMin: 1500, spawnTimerMax: 4000, speedMin: 2, speedMax: 5, gravityIncrease: 0.05, size: 30 }
         };
 
@@ -662,52 +677,26 @@
 
         // Audio Context
         let audioCtx;
-        const soundBuffers = {};
-
-        async function loadSound(name, url) {
-            try {
-                const response = await fetch(url);
-                const arrayBuffer = await response.arrayBuffer();
-                const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
-                soundBuffers[name] = audioBuffer;
-                console.log(`Sound loaded: ${name}`);
-            } catch (e) {
-                console.error(`Failed to load sound ${name}:`, e);
-            }
-        }
-
-        async function initAudio() {
+        function initAudio() {
+            // Initialize Audio Context (still needed for some fallbacks or other features, but primary audio is now HTML5 Audio)
             if (!audioCtx) {
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                // Preload sounds
-                loadSound('poopdrop', 'assets/sounds/effects/poopdrop.wav');
-                loadSound('poopland', 'assets/sounds/effects/poopland.wav');
-                loadSound('powerup', 'assets/sounds/effects/powerup.wav');
             }
-        }
-
-        function playSound(name) {
-            if (!audioCtx || !soundBuffers[name]) return;
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            const source = audioCtx.createBufferSource();
-            source.buffer = soundBuffers[name];
-            source.connect(audioCtx.destination);
-            source.start(0);
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
         }
 
         function playHonk(type = 'default') {
-            if (!audioCtx) return;
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.connect(gain); gain.connect(audioCtx.destination);
-            const freq = type === 'truck' ? 120 : (type === 'ambulance' ? 440 : 220);
-            osc.type = 'square';
-            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-            if (type === 'ambulance') osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.2);
-            gain.gain.setValueAtTime(settings.audio.honkVolume, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
-            osc.start(); osc.stop(audioCtx.currentTime + 0.15);
+            const honks = ['honk1', 'honk2', 'honk3'];
+            const key = honks[Math.floor(Math.random() * honks.length)];
+
+            if (gameAudio[key]) {
+                // Clone node to allow overlapping same sound
+                const s = gameAudio[key].cloneNode();
+                s.volume = settings.audio.honkVolume;
+                s.play().catch(e => console.warn('Honk play failed:', e));
+            }
         }
 
         // Game State
@@ -731,9 +720,11 @@
         // World Objects
         let bird = { x: 200, y: 150, frame: 0, wings: 0 };
         let vehicles = [];
+        let honkEffects = [];
         let poops = [];
         let splats = [];
         let clouds = [];
+        let silhouettes = [];
         let trees = [];
         let foods = [];
         let foodImages = {};
@@ -741,6 +732,22 @@
 
         const dropImages = {};
         const dropFiles = { 'down': 'droppingdown.png', 'car': 'landoncar.png' };
+
+        // Backgrounds
+        const bgImages = {};
+        const bgFiles = { '300ft': '300ft.png', 'desert': 'desert.png' };
+
+
+        // Audio Effects
+        const gameAudio = {};
+        const audioFiles = {
+            'eat': 'assets/sounds/effects/eatfood.wav',
+            'drop': 'assets/sounds/effects/poopdrop.wav',
+            'splat': 'assets/sounds/effects/poopland.wav',
+            'honk1': 'assets/sounds/vehicles/honk1.wav',
+            'honk2': 'assets/sounds/vehicles/honk2.wav',
+            'honk3': 'assets/sounds/vehicles/honk3.wav'
+        };
 
         const vehicleSprites = {
             bus: ['bus_left_01.png', 'bus_left_02.png', 'bus_right_01.png', 'bus_right_02.png', 'bus_right_03.png', 'bus_right_04.png'],
@@ -774,6 +781,12 @@
                     vehicleImages[cat].push({ img, file });
                 });
             }
+            // Backgrounds
+            for (let key in bgFiles) {
+                const img = new Image();
+                img.src = `assets/visuals/backgrounds/${bgFiles[key]}`;
+                bgImages[key] = img;
+            }
             // Bird
             birdFiles.forEach(file => {
                 const img = new Image();
@@ -782,11 +795,25 @@
             });
         }
 
+        function preloadAudio() {
+            for (let key in audioFiles) {
+                gameAudio[key] = new Audio(audioFiles[key]);
+            }
+        }
+
+        function playSound(key) {
+            if (gameAudio[key]) {
+                gameAudio[key].currentTime = 0;
+                gameAudio[key].play().catch(e => console.warn('Audio play failed:', e));
+            }
+        }
+
         let keys = {};
         let lastTime = 0;
         let spawnTimer = 0;
         let foodSpawnTimer = 0;
         let frameCount = 0;
+        let bgX = 0; // Background scroll position
 
         function resize() {
             canvas.width = window.innerWidth;
@@ -805,14 +832,47 @@
                     trees.push({
                         x: Math.random() * canvas.width,
                         y: canvas.height * settings.traffic.roadY - 20,
-                        s: 0.8 + Math.random() * 0.5
+                        s: 0.8 + Math.random() * 0.5,
+                        type: 'tree'
                     });
+                for (let i = 0; i < settings.environment.shopCount; i++)
+                    trees.push({
+                        x: Math.random() * canvas.width,
+                        y: canvas.height * settings.traffic.roadY - 20,
+                        s: 0.8 + Math.random() * 0.4,
+                        type: 'shop'
+                    });
+                for (let i = 0; i < settings.environment.commercialCount; i++)
+                    trees.push({
+                        x: Math.random() * canvas.width,
+                        y: canvas.height * settings.traffic.roadY - 20,
+                        s: 1.0 + Math.random() * 0.6,
+                        type: 'commercial'
+                    });
+
+                // Init Silhouettes
+                if (silhouettes.length === 0) {
+                    const cityColors = ['#2c3e50', '#34495e', '#7f8c8d', '#95a5a6', '#4b6584'];
+                    for (let i = 0; i < settings.environment.silhouetteCount; i++) {
+                        const type = Math.random() > 0.4 ? 'building' : 'skyscraper';
+                        silhouettes.push({
+                            x: Math.random() * canvas.width,
+                            y: canvas.height * settings.traffic.roadY,
+                            w: type === 'skyscraper' ? (40 + Math.random() * 40) : (80 + Math.random() * 100),
+                            h: type === 'skyscraper' ? (150 + Math.random() * 200) : (60 + Math.random() * 120),
+                            type: type,
+                            color: cityColors[Math.floor(Math.random() * cityColors.length)],
+                            speed: settings.environment.scrollSpeedRoad * (0.1 + Math.random() * 0.05)
+                        });
+                    }
+                }
             }
         }
         window.addEventListener('resize', resize);
 
         async function init() {
             preloadImages();
+            preloadAudio();
             syncSettingsToUI(); // Initial defaults
             await loadSettings();
             syncSettingsToUI(); // After JSON load
@@ -842,8 +902,12 @@
                 'set-gameplay-noiseDecay': settings.gameplay.noiseDecay,
                 'set-gameplay-noiseIncrease': settings.gameplay.noiseIncrease,
                 'set-environment-treeCount': settings.environment.treeCount,
+                'set-environment-shopCount': settings.environment.shopCount,
+                'set-environment-commercialCount': settings.environment.commercialCount,
+                'set-environment-silhouetteCount': settings.environment.silhouetteCount,
                 'set-environment-cloudCount': settings.environment.cloudCount,
                 'set-environment-scrollSpeedRoad': settings.environment.scrollSpeedRoad,
+                'set-environment-background': settings.environment.background || 'none',
                 'set-audio-honkVolume': settings.audio.honkVolume,
                 'set-food-spawnTimerMin': settings.food.spawnTimerMin,
                 'set-food-spawnTimerMax': settings.food.spawnTimerMax,
@@ -886,8 +950,12 @@
                 settings.gameplay.noiseDecay = parseFloat(document.getElementById('set-gameplay-noiseDecay').value) || settings.gameplay.noiseDecay;
                 settings.gameplay.noiseIncrease = parseFloat(document.getElementById('set-gameplay-noiseIncrease').value) || settings.gameplay.noiseIncrease;
                 settings.environment.treeCount = parseInt(document.getElementById('set-environment-treeCount').value) || settings.environment.treeCount;
+                settings.environment.shopCount = parseInt(document.getElementById('set-environment-shopCount').value) || settings.environment.shopCount;
+                settings.environment.commercialCount = parseInt(document.getElementById('set-environment-commercialCount').value) || settings.environment.commercialCount;
+                settings.environment.silhouetteCount = parseInt(document.getElementById('set-environment-silhouetteCount').value) || settings.environment.silhouetteCount;
                 settings.environment.cloudCount = parseInt(document.getElementById('set-environment-cloudCount').value) || settings.environment.cloudCount;
                 settings.environment.scrollSpeedRoad = parseFloat(document.getElementById('set-environment-scrollSpeedRoad').value) || settings.environment.scrollSpeedRoad;
+                settings.environment.background = document.getElementById('set-environment-background').value;
                 settings.audio.honkVolume = parseFloat(document.getElementById('set-audio-honkVolume').value) || settings.audio.honkVolume;
 
                 settings.food.spawnTimerMin = parseFloat(document.getElementById('set-food-spawnTimerMin').value) || settings.food.spawnTimerMin;
@@ -902,6 +970,7 @@
                 // Re-init environmental elements to reflect changes
                 clouds = [];
                 trees = [];
+                silhouettes = [];
                 resize();
                 draw(); // Refresh title screen background
                 closeSettings();
@@ -923,7 +992,8 @@
                     // inventoryVal.innerText = poopInventory; // No longer persistent
                     if (poopsDropped % 10 === 0) showNotification(`${poopsDropped} Poops Dropped!`, 'poop');
                     if (poopInventory <= 5) showNotification(`LOW STOCKS: ${poopInventory}`, 'stock');
-                    playSound('poopdrop');
+                    playHonk('shoot');
+                    playSound('drop');
                 }
             }
         });
@@ -1033,6 +1103,12 @@
             bird.frame = Math.floor(frameCount / 5) % 4; // Cycle through 4 frames every 5 game frames
 
             // Env
+            // Background Scroll
+            if (settings.environment.background !== 'none') {
+                bgX -= settings.environment.scrollSpeedRoad * 0.1; // Slow parallax
+                if (bgX <= -canvas.width) bgX = 0; // Assuming Image is scaled to canvas width or similar
+            }
+
             clouds.forEach(c => {
                 c.x -= c.speed;
                 if (c.x < -200) c.x = canvas.width + 100;
@@ -1042,11 +1118,29 @@
                 if (t.x < -100) t.x = canvas.width + 50;
             });
 
+            silhouettes.forEach(s => {
+                s.x -= s.speed;
+                if (s.x < -s.w) s.x = canvas.width + s.w;
+            });
+
             // Food Spawning
             foodSpawnTimer -= dt;
             if (foodSpawnTimer <= 0) {
                 spawnFood();
                 foodSpawnTimer = settings.food.spawnTimerMin + Math.random() * (settings.food.spawnTimerMax - settings.food.spawnTimerMin);
+            }
+
+            // Update Honk Effects
+            for (let i = honkEffects.length - 1; i >= 0; i--) {
+                const h = honkEffects[i];
+                h.r += 2; // Expand radius
+                h.alpha -= 0.02; // Fade out
+                // Move with road slightly to match momentum
+                h.x -= (h.speed || 5) * 0.5;
+
+                if (h.alpha <= 0) {
+                    honkEffects.splice(i, 1);
+                }
             }
 
             // Food Movement and Collision
@@ -1064,7 +1158,7 @@
                     }
                     poopInventory += 10;
                     showNotification(`+10 STOCKS! (${poopInventory})`, 'stock');
-                    playSound('powerup');
+                    playSound('eat');
                     foods.splice(i, 1);
                     continue;
                 }
@@ -1079,33 +1173,98 @@
                 spawnTimer = Math.max(settings.traffic.spawnTimerMin, settings.traffic.spawnTimerInitial - (difficulty * settings.traffic.difficultySpawnReduction));
             }
 
+            // Sort vehicles by X (furthest ahead first) to process traffic flow correctly
+            vehicles.sort((a, b) => b.x - a.x);
+
             for (let i = vehicles.length - 1; i >= 0; i--) {
                 const v = vehicles[i];
                 let targetSpeed = v.baseSpeed;
+                let isStuck = false;
+
                 if (v.pooped) {
                     v.vy += 0.2;
                     v.y += v.vy;
                     v.angle += 0.02;
                     targetSpeed = v.speed * 0.98;
                 } else {
+                    // Find closest car ahead in the same lane
+                    let carAhead = null;
+                    let minDist = Infinity;
+
+                    // Since we sorted by X descending, we can look at previous elements (actually we need to check all because lanes differ)
+                    // Optimization: check all, but since N is small (<50), O(N^2) is fine.
                     for (let j = 0; j < vehicles.length; j++) {
                         const other = vehicles[j];
                         if (v === other || other.pooped) continue;
-                        if (v.lane === other.lane && other.x > v.x && other.x - v.x < settings.traffic.jamDistance) {
-                            targetSpeed = other.speed * settings.traffic.slowDownFactor;
-                            break;
+                        if (v.lane === other.lane && other.x > v.x) {
+                            const dist = other.x - v.x;
+                            if (dist < minDist) {
+                                minDist = dist;
+                                carAhead = other;
+                            }
+                        }
+                    }
+
+                    if (carAhead) {
+                        const safeDist = settings.traffic.jamDistance;
+                        const criticalDist = 120; // Approx car length + small gap
+
+                        if (minDist < safeDist) {
+                            // Match speed to maintain convoy
+                            targetSpeed = Math.min(v.baseSpeed, carAhead.speed);
+
+                            // If getting too close, slow down further
+                            if (minDist < criticalDist + 50) {
+                                targetSpeed = Math.min(targetSpeed, carAhead.speed * 0.8);
+                                isStuck = true;
+                            }
+
+                            // HARD BRAKE / ANTI-CLIP
+                            if (minDist < criticalDist) {
+                                v.x = carAhead.x - criticalDist; // Hard clamp position
+                                v.speed = carAhead.speed; // Hard clamp speed
+                                targetSpeed = carAhead.speed;
+                            }
                         }
                     }
                 }
-                v.speed += (targetSpeed - v.speed) * 0.05;
+
+                // Normal acceleration/deceleration
+                if (!v.pooped) {
+                    v.speed += (targetSpeed - v.speed) * 0.1; // More responsive braking (0.1 vs 0.05)
+                } else {
+                    v.speed += (targetSpeed - v.speed) * 0.05;
+                }
+
                 v.x += v.speed;
 
                 if (!v.pooped) {
-                    let honkChance = v.speed < v.baseSpeed * 0.8 ? settings.audio.honkChanceJam : settings.audio.honkChanceNormal;
+                    // Honk logic
+                    let honkChance = 0;
+                    if (isStuck && v.speed < 1) {
+                        // Almost stopped
+                        honkChance = 0.05; // 5% per frame (very angry)
+                    } else if (isStuck || v.speed < v.baseSpeed * 0.5) {
+                        // Moving slowly / stuck
+                        honkChance = 0.02; // 2% per frame
+                    } else {
+                        // Normal driiving
+                        honkChance = settings.audio.honkChanceNormal;
+                    }
+
                     if (Math.random() < honkChance) {
                         v.shake = 10;
                         noiseLevel += settings.gameplay.noiseIncrease;
                         playHonk(v.type);
+                        // Spawn visual sound wave
+                        honkEffects.push({
+                            x: v.x,
+                            y: v.y,
+                            r: 10,
+                            alpha: 1.0,
+                            color: '#ffffff',
+                            speed: settings.environment.scrollSpeedRoad
+                        });
                     }
                 }
                 if (v.shake > 0) v.shake *= 0.85;
@@ -1119,7 +1278,7 @@
                             carsSilenced++;
                             showNotification(`Silenced! (${carsSilenced})`, 'silenced');
                             splats.push({ vId: v.id, lx: poop.x - v.x, ly: poop.y - v.y, s: 30 + Math.random() * 10, image: dropImages['car'] });
-                            playSound('poopland');
+                            playSound('splat');
                         }
                         poops.splice(p, 1);
                     }
@@ -1134,10 +1293,7 @@
             for (let i = poops.length - 1; i >= 0; i--) {
                 poops[i].y += poops[i].vy;
                 poops[i].vy += settings.physics.poopGravity;
-                if (poops[i].y > canvas.height) {
-                    playSound('poopland');
-                    poops.splice(i, 1);
-                }
+                if (poops[i].y > canvas.height) poops.splice(i, 1);
             }
 
             noiseLevel = Math.max(0, noiseLevel - settings.gameplay.noiseDecay);
@@ -1147,6 +1303,78 @@
 
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Background
+            if (settings.environment.background && settings.environment.background !== 'none' && bgImages[settings.environment.background] && bgImages[settings.environment.background].complete) {
+                const bgImg = bgImages[settings.environment.background];
+                // Draw cover style.
+                // We want to fill the height, and repeat horizontally.
+                // Use canvas.height to determine scale? or just cover mode.
+                // Let's assume height is the constraint if we want "infinite" horizontal.
+
+                // For simplicity and "300ft" usually implying verticality or a strip:
+                // If it's a wide image, we tile it. If tall, we crop?
+                // Given the user wants infinite scroll, we tile horizontally.
+
+                // Strategy: Draw image scaled to fit height, repeated X.
+                const scale = canvas.height / bgImg.height; // Fit height
+                const scaledWidth = bgImg.width * scale;
+
+                // Calculate how many we need
+                // Current offset is bgX.
+                // We need to draw starting from (bgX % scaledWidth)
+
+                // Actually, simplest infinite scroll:
+
+                // Reset bgX if too far (handled in update, but needs to match width)
+                // Override update logic for exact width:
+                if (bgX <= -scaledWidth) bgX += scaledWidth;
+
+                let drawX = bgX;
+                while (drawX < canvas.width) {
+                    ctx.drawImage(bgImg, Math.floor(drawX), 0, Math.ceil(scaledWidth), canvas.height);
+                    drawX += scaledWidth;
+                }
+            } else {
+                // Default Gradient if no image or not loaded
+                // Existing background is applied via CSS on #game-container, but canvas is transparent?
+                // Wait, canvas has no background set in draw(), so it shows the CSS gradient.
+                // But we used clearRect.
+                // The CSS is visible through the clear canvas.
+                // So if we don't draw anything here, the gradient shows. Correct.
+            }
+
+            // Silhouettes (City Structures)
+            silhouettes.forEach(s => {
+                ctx.fillStyle = s.color;
+                // Main Structure
+                ctx.fillRect(s.x - s.w / 2, s.y - s.h, s.w, s.h);
+
+                // Details (Windows or Roof)
+                if (s.type === 'skyscraper' && s.h > 150) {
+                    // Antenna
+                    ctx.strokeStyle = s.color;
+                    ctx.lineWidth = 4;
+                    ctx.beginPath();
+                    ctx.moveTo(s.x, s.y - s.h);
+                    ctx.lineTo(s.x, s.y - s.h - 30);
+                    ctx.stroke();
+                } else {
+                    // Slight variation on roof
+                    ctx.fillRect(s.x - s.w / 4, s.y - s.h - 10, s.w / 2, 10);
+                }
+
+                // Simple Window Grid (only if simplified isn't forced too hard)
+                ctx.fillStyle = 'rgba(255,255,255,0.05)';
+                const rows = 4;
+                const cols = Math.floor(s.w / 20);
+                const winW = s.w / (cols * 2);
+                for (let r = 1; r < rows; r++) {
+                    for (let c = 1; c < cols; c++) {
+                        ctx.fillRect(s.x - s.w / 2 + c * (s.w / cols), s.y - s.h + r * 30, winW, 10);
+                    }
+                }
+            });
 
             // Clouds
             ctx.fillStyle = 'rgba(255,255,255,0.7)';
@@ -1166,7 +1394,7 @@
 
             ctx.strokeStyle = '#666';
             ctx.setLineDash([40, 40]);
-            ctx.lineDashOffset = frameCount * 5;
+            ctx.lineDashOffset = frameCount * settings.environment.scrollSpeedRoad;
             ctx.lineWidth = 4;
             for (let i = 1; i < settings.traffic.lanes; i++) {
                 const ly = roadY + (i * settings.traffic.laneHeight);
@@ -1174,14 +1402,78 @@
             }
             ctx.setLineDash([]);
 
-            // Trees
+            // Subsurface / Underground Layer
+            const roadBottom = roadY + totalHeight;
+            if (roadBottom < canvas.height) {
+                // Dirt Fill
+                ctx.fillStyle = '#5D4037'; // Earth Brown
+                ctx.fillRect(0, roadBottom, canvas.width, canvas.height - roadBottom);
+
+                // Stone Tiles
+                const stoneSize = 40;
+                const stoneGap = 20;
+                const stoneSpeed = settings.environment.scrollSpeedRoad;
+                const sOffset = (frameCount * stoneSpeed) % (stoneSize + stoneGap);
+
+                ctx.fillStyle = '#795548'; // Lighter Brown/Grey for stones
+                // Draw a grid of stones
+                for (let y = roadBottom + 10; y < canvas.height; y += stoneSize + stoneGap) {
+                    for (let x = -stoneSize - stoneGap; x < canvas.width + stoneSize; x += stoneSize + stoneGap) {
+                        // Add some random offsets based on position for variety
+                        // We use a pseudo-random based on x/y index to keep it consistent while scrolling
+                        // Actually, standard scrolling grid is safer for seamless loop
+                        ctx.fillRect(x - sOffset, y, stoneSize, stoneSize * 0.6);
+                    }
+                }
+            }
+
+            // Ground Verge (Brown-Greenish Pavement)
+            const vergeHeight = 40;
+            ctx.fillStyle = '#6B8E23'; // Olive Drab / Brownish-Green
+            ctx.fillRect(0, roadY - vergeHeight, canvas.width, vergeHeight);
+
+            // Roadside Objects (Trees, Shops, Buildings)
+            // Roadside Objects (Trees, Shops, Buildings)
+            // Pass 1: Buildings (Background)
             trees.forEach(t => {
-                ctx.fillStyle = '#4e342e';
-                ctx.fillRect(t.x, t.y - 20, 10 * t.s, 30 * t.s);
-                ctx.fillStyle = '#2e7d32';
-                ctx.beginPath();
-                ctx.arc(t.x + 5 * t.s, t.y - 30, 20 * t.s, 0, Math.PI * 2);
-                ctx.fill();
+                if (t.type === 'shop') {
+                    // Tin-shade shop
+                    ctx.fillStyle = '#7f8c8d'; // Tin color
+                    ctx.fillRect(t.x, t.y - 15 * t.s, 40 * t.s, 15 * t.s);
+                    // Slanted roof
+                    ctx.fillStyle = '#95a5a6';
+                    ctx.beginPath();
+                    ctx.moveTo(t.x - 5, t.y - 15 * t.s);
+                    ctx.lineTo(t.x + 45 * t.s, t.y - 25 * t.s);
+                    ctx.lineTo(t.x + 45 * t.s, t.y - 15 * t.s);
+                    ctx.fill();
+                    // Door
+                    ctx.fillStyle = '#2c3e50';
+                    ctx.fillRect(t.x + 10 * t.s, t.y - 10 * t.s, 10 * t.s, 10 * t.s);
+                } else if (t.type === 'commercial') {
+                    // Medium commercial building
+                    ctx.fillStyle = '#34495e';
+                    ctx.fillRect(t.x, t.y - 60 * t.s, 60 * t.s, 60 * t.s);
+                    // Windows
+                    ctx.fillStyle = 'rgba(255,255,200,0.3)';
+                    for (let r = 0; r < 3; r++) {
+                        for (let c = 0; c < 3; c++) {
+                            ctx.fillRect(t.x + 5 * t.s + c * 18 * t.s, t.y - 55 * t.s + r * 18 * t.s, 10 * t.s, 10 * t.s);
+                        }
+                    }
+                }
+            });
+            // Pass 2: Trees (Foreground - always in front of buildings)
+            trees.forEach(t => {
+                if (t.type !== 'shop' && t.type !== 'commercial') {
+                    // Default: Tree
+                    ctx.fillStyle = '#4e342e';
+                    ctx.fillRect(t.x, t.y - 20, 10 * t.s, 30 * t.s);
+                    ctx.fillStyle = '#2e7d32';
+                    ctx.beginPath();
+                    ctx.arc(t.x + 5 * t.s, t.y - 30, 20 * t.s, 0, Math.PI * 2);
+                    ctx.fill();
+                }
             });
 
             // Vehicles
@@ -1207,6 +1499,42 @@
                 ctx.restore();
             });
 
+            // Honk Effects (Sound Waves)
+            honkEffects.forEach(h => {
+                ctx.save();
+                ctx.strokeStyle = `rgba(255, 255, 255, ${h.alpha})`;
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(h.x, h.y, h.r, 0, Math.PI * 2);
+                ctx.stroke();
+
+                // Second echo
+                if (h.r > 20) {
+                    ctx.strokeStyle = `rgba(255, 255, 255, ${h.alpha * 0.6})`;
+                    ctx.beginPath();
+                    ctx.arc(h.x, h.y, h.r - 10, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+                ctx.restore();
+            });
+
+            // Honk Effects (Sound Waves)
+            honkEffects.forEach(h => {
+                ctx.strokeStyle = `rgba(255, 255, 255, ${h.alpha})`;
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(h.x, h.y, h.r, 0, Math.PI * 2);
+                ctx.stroke();
+
+                // Second echo
+                if (h.r > 20) {
+                    ctx.strokeStyle = `rgba(255, 255, 255, ${h.alpha * 0.6})`;
+                    ctx.beginPath();
+                    ctx.arc(h.x, h.y, h.r - 10, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+            });
+
             // Food
             foods.forEach(f => {
                 if (f.image && f.image.complete) {
@@ -1223,6 +1551,8 @@
                     ctx.beginPath(); ctx.arc(p.x, p.y, 10, 0, Math.PI * 2); ctx.fill();
                 }
             });
+
+
 
             // Bird (Image view)
             ctx.save();
