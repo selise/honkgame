@@ -416,6 +416,193 @@
             background: rgba(255, 255, 255, 0.1);
             border-radius: 4px;
         }
+
+        .score-hud {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .score-box {
+            background: var(--glass);
+            backdrop-filter: blur(10px);
+            padding: 15px 25px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            font-weight: 900;
+            font-size: 1.5rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .floating-score {
+            position: absolute;
+            color: var(--primary);
+            font-weight: 900;
+            font-size: 2rem;
+            pointer-events: none;
+            animation: floatUp 1s ease-out forwards;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+            z-index: 20;
+        }
+
+        .floating-score.negative {
+            color: var(--danger);
+        }
+
+        .floating-score.combo {
+            color: #FF00FF;
+            font-size: 2.5rem;
+        }
+
+        @keyframes floatUp {
+            0% {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateY(-50px) scale(1.2);
+                opacity: 0;
+            }
+        }
+
+        /* Player Name Input Styles */
+        .name-input-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .name-input {
+            background: rgba(0, 0, 0, 0.4);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 15px;
+            font-family: inherit;
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-align: center;
+            width: 300px;
+            transition: all 0.3s ease;
+        }
+
+        .name-input:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+        }
+
+        .name-input::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .name-error {
+            color: var(--danger);
+            font-size: 0.9rem;
+            min-height: 1.2em;
+        }
+
+        /* Leaderboard Styles */
+        .leaderboard-container {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 20px;
+            padding: 30px;
+            min-width: 500px;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+
+        .leaderboard-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .leaderboard-table th,
+        .leaderboard-table td {
+            padding: 12px 15px;
+            text-align: left;
+        }
+
+        .leaderboard-table th {
+            color: var(--primary);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .leaderboard-table td {
+            font-weight: 700;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .leaderboard-table tr:hover td {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .rank-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            font-weight: 900;
+            font-size: 0.9rem;
+        }
+
+        .rank-1 {
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            color: #000;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+        }
+
+        .rank-2 {
+            background: linear-gradient(135deg, #C0C0C0, #A0A0A0);
+            color: #000;
+        }
+
+        .rank-3 {
+            background: linear-gradient(135deg, #CD7F32, #8B4513);
+            color: #fff;
+        }
+
+        .rank-other {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        .leaderboard-empty {
+            text-align: center;
+            padding: 40px;
+            color: #aaa;
+        }
+
+        .leaderboard-loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--primary);
+        }
+
+        .your-score-row td {
+            background: rgba(255, 215, 0, 0.1) !important;
+            border-left: 3px solid var(--primary);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
     </style>
 </head>
 
@@ -438,175 +625,219 @@
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Dynamic Notifications -->
-        <div id="notification-container"></div>
+    <div class="score-hud hidden" id="score-ui">
+        <div class="score-box">
+            <span>SCORE:</span>
+            <span id="score-val" style="color: var(--primary);">0</span>
+        </div>
+    </div>
 
-        <!-- Title Screen -->
-        <div id="title-screen" class="screen">
-            <h1>POOP PATROL</h1>
-            <div class="subtitle">Horizontal Poopage</div>
-            <div id="settings-status"
-                style="margin-top: -30px; margin-bottom: 20px; font-size: 0.8rem; color: #fff; background: rgba(0,0,0,0.4); padding: 5px 15px; border-radius: 20px;">
-                Checking settings...</div>
-            <div style="display: flex; gap: 20px;">
-                <button class="btn" onclick="startGame()">Start Flight</button>
-                <button class="btn btn-secondary" onclick="openSettings()">Settings</button>
+    <!-- Dynamic Notifications -->
+    <div id="notification-container"></div>
+
+    <!-- Title Screen -->
+    <div id="title-screen" class="screen">
+        <h1>POOP PATROL</h1>
+        <div class="subtitle">Horizontal Poopage</div>
+        <div id="settings-status"
+            style="margin-top: -30px; margin-bottom: 20px; font-size: 0.8rem; color: #fff; background: rgba(0,0,0,0.4); padding: 5px 15px; border-radius: 20px;">
+            Checking settings...</div>
+        <div style="display: flex; gap: 20px;">
+            <button class="btn" onclick="showNameInput()">Start Flight</button>
+            <button class="btn btn-secondary" onclick="openLeaderboard()">Leaderboard</button>
+            <button class="btn btn-secondary" onclick="openSettings()">Settings</button>
+        </div>
+        <div class="instructions">
+            <div><span class="instruction-key">W A S D</span> / <span class="instruction-key">&uarr; &larr; &darr;
+                    &rarr;</span> Move Bird</div>
+            <div><span class="instruction-key">SPACE</span> Poop on Traffic</div>
+        </div>
+    </div>
+
+    <!-- Player Name Input Screen -->
+    <div id="name-input-screen" class="screen hidden">
+        <h2 style="font-size: 2.5rem; margin-bottom: 10px;">ENTER YOUR NAME</h2>
+        <div class="subtitle">Show your name on the leaderboard!</div>
+        <div class="name-input-container">
+            <input type="text" id="player-name-input" class="name-input" placeholder="Your Name" maxlength="20"
+                autocomplete="off">
+            <div id="name-error" class="name-error"></div>
+        </div>
+        <div class="btn-group">
+            <button class="btn btn-secondary" onclick="backToTitle()">Back</button>
+            <button class="btn" onclick="confirmNameAndStart()">Let's Fly!</button>
+        </div>
+    </div>
+
+    <!-- Leaderboard Screen -->
+    <div id="leaderboard-screen" class="screen hidden">
+        <h2 style="font-size: 2.5rem; margin-bottom: 10px;">🏆 LEADERBOARD</h2>
+        <div class="subtitle">Top Poop Patrol Champions</div>
+        <div class="leaderboard-container">
+            <div id="leaderboard-content" class="leaderboard-loading">Loading...</div>
+        </div>
+        <div class="btn-group">
+            <button class="btn btn-secondary" onclick="closeLeaderboard()">Back</button>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal hidden">
+        <div class="modal-header">
+            <h2 style="margin:0; color:var(--primary);">Game Settings</h2>
+            <div style="font-size: 0.8rem; opacity: 0.6;">Apply changes before starting flight</div>
+        </div>
+        <div class="modal-body" id="settings-editor-fields">
+            <!-- Group Bird -->
+            <div class="setting-group">
+                <div class="setting-group-title">Bird</div>
+                <div class="input-field">
+                    <label>Speed</label>
+                    <input type="number" id="set-bird-speed" step="1">
+                </div>
+                <div class="input-field">
+                    <label>Screen Margin</label>
+                    <input type="number" id="set-bird-margin" step="5">
+                </div>
             </div>
-            <div class="instructions">
-                <div><span class="instruction-key">W A S D</span> / <span class="instruction-key">&uarr; &larr; &darr;
-                        &rarr;</span> Move Bird</div>
-                <div><span class="instruction-key">SPACE</span> Poop on Traffic</div>
+            <!-- Group Traffic -->
+            <div class="setting-group" style="grid-column: span 2;">
+                <div class="setting-group-title">Traffic & Difficulty</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="input-field"><label>Lanes</label><input type="number" id="set-traffic-lanes" value="3"
+                            step="1" min="1" max="10"></div>
+                    <div class="input-field"><label>Lane Height</label><input type="number" id="set-traffic-laneHeight"
+                            value="50" step="5"></div>
+                    <div class="input-field"><label>Base Speed Min</label><input type="number"
+                            id="set-traffic-baseSpeedMin" value="1" step="0.5"></div>
+                    <div class="input-field"><label>Base Speed Max</label><input type="number"
+                            id="set-traffic-baseSpeedMax" value="10" step="0.5"></div>
+                    <div class="input-field"><label>Spawn Delay (Initial)</label><input type="number"
+                            id="set-traffic-spawnTimerInitial" value="2000" step="100"></div>
+                    <div class="input-field"><label>Spawn Delay (Min)</label><input type="number"
+                            id="set-traffic-spawnTimerMin" value="600" step="100"></div>
+                    <div class="input-field"><label>Diff. Increase Int.</label><input type="number"
+                            id="set-traffic-difficultyInterval" value="15" step="5"></div>
+                    <div class="input-field"><label>Spawn Reduction</label><input type="number"
+                            id="set-traffic-difficultySpawnReduction" value="150" step="10"></div>
+                </div>
+            </div>
+            <!-- Group Physics -->
+            <div class="setting-group">
+                <div class="setting-group-title">Physics</div>
+                <div class="input-field"><label>Poop Gravity</label><input type="number" id="set-physics-poopGravity"
+                        value="0.2" step="0.05"></div>
+                <div class="input-field"><label>Initial Velocity</label><input type="number"
+                        id="set-physics-poopInitialVy" value="2" step="0.5"></div>
+            </div>
+            <!-- Group Gameplay -->
+            <div class="setting-group">
+                <div class="setting-group-title">Gameplay</div>
+                <div class="input-field"><label>Max Noise</label><input type="number" id="set-gameplay-noiseMax"
+                        value="100" step="10"></div>
+                <div class="input-field"><label>Noise Decay</label><input type="number" id="set-gameplay-noiseDecay"
+                        value="0.05" step="0.01"></div>
+                <div class="input-field"><label>Noise Incr./Honk</label><input type="number"
+                        id="set-gameplay-noiseIncrease" value="2" step="1"></div>
+            </div>
+            <!-- Group Environment -->
+            <div class="setting-group">
+                <div class="setting-group-title">Environment</div>
+                <div class="input-field"><label>Tree Count</label><input type="number" id="set-environment-treeCount"
+                        value="10" step="1"></div>
+                <div class="input-field"><label>Shop Count</label><input type="number" id="set-environment-shopCount"
+                        value="5" step="1"></div>
+                <div class="input-field"><label>Comm. Count</label><input type="number"
+                        id="set-environment-commercialCount" value="3" step="1"></div>
+                <div class="input-field"><label>Cloud Count</label><input type="number" id="set-environment-cloudCount"
+                        value="20" step="1"></div>
+                <div class="input-field"><label>Silhouette Count</label><input type="number"
+                        id="set-environment-silhouetteCount" step="1"></div>
+                <div class="input-field"><label>Road Scroll Spd</label><input type="number"
+                        id="set-environment-scrollSpeedRoad" step="0.5"></div>
+                <div class="input-field" style="grid-column: span 3;">
+                    <label>Background</label>
+                    <select id="set-environment-background"
+                        style="width:100%; background:rgba(0,0,0,0.3); color:white; border:1px solid rgba(255,255,255,0.1); padding:8px; border-radius:8px;">
+                        <option value="none">None (Gradient)</option>
+                        <option value="300ft">300ft View</option>
+                        <option value="desert">Desert View</option>
+                    </select>
+                </div>
+            </div>
+            <!-- Group Audio -->
+            <div class="setting-group">
+                <div class="setting-group-title">Audio</div>
+                <div class="input-field"><label>Honk Volume</label><input type="number" id="set-audio-honkVolume"
+                        step="0.01" min="0" max="1"></div>
+            </div>
+            <!-- Group Food -->
+            <div class="setting-group" style="grid-column: span 2;">
+                <div class="setting-group-title">Flying Food</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
+                    <div class="input-field"><label>Spawn Min (ms)</label><input type="number"
+                            id="set-food-spawnTimerMin" step="100"></div>
+                    <div class="input-field"><label>Spawn Max (ms)</label><input type="number"
+                            id="set-food-spawnTimerMax" step="100"></div>
+                    <div class="input-field"><label>Speed Min</label><input type="number" id="set-food-speedMin"
+                            step="0.5"></div>
+                    <div class="input-field"><label>Speed Max</label><input type="number" id="set-food-speedMax"
+                            step="0.5"></div>
+                    <div class="input-field"><label>Gravity Incr.</label><input type="number"
+                            id="set-food-gravityIncrease" step="0.01"></div>
+                    <div class="input-field"><label>Food Size</label><input type="number" id="set-food-size" step="5">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-small btn-secondary" onclick="closeSettings()">Cancel</button>
+            <button class="btn btn-small" onclick="saveSettings()">Save Changes</button>
+        </div>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="game-over-screen" class="screen hidden">
+        <h2 style="margin-bottom: 5px;">GAME OVER!</h2>
+        <div class="subtitle">The honking was too much!</div>
+
+        <div class="final-stats">
+            <div class="final-stat-item">
+                <span class="final-stat-label">Time Survived</span>
+                <span id="final-time" class="final-stat-value">0s</span>
+            </div>
+            <div class="final-stat-item">
+                <span class="final-stat-label">Cars Silenced</span>
+                <span id="final-silenced" class="final-stat-value">0</span>
+            </div>
+            <div class="final-stat-item">
+                <span class="final-stat-label">Poops Dropped</span>
+                <span id="final-poops" class="final-stat-value">0</span>
+            </div>
+            <div class="final-stat-item">
+                <span class="final-stat-label">Final Level</span>
+                <span id="final-level" class="final-stat-value">Lv 1</span>
+            </div>
+            <div class="final-stat-item">
+                <span class="final-stat-label">Final Score</span>
+                <span id="final-score" class="final-stat-value">0</span>
+            </div>
+            <div class="final-stat-item"
+                style="grid-column: span 2; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
+                <span class="final-stat-label">Personal Best</span>
+                <span id="final-best" class="final-stat-value" style="font-size: 1.2rem;">0s</span>
             </div>
         </div>
 
-        <!-- Settings Modal -->
-        <div id="settings-modal" class="modal hidden">
-            <div class="modal-header">
-                <h2 style="margin:0; color:var(--primary);">Game Settings</h2>
-                <div style="font-size: 0.8rem; opacity: 0.6;">Apply changes before starting flight</div>
-            </div>
-            <div class="modal-body" id="settings-editor-fields">
-                <!-- Group Bird -->
-                <div class="setting-group">
-                    <div class="setting-group-title">Bird</div>
-                    <div class="input-field">
-                        <label>Speed</label>
-                        <input type="number" id="set-bird-speed" step="1">
-                    </div>
-                    <div class="input-field">
-                        <label>Screen Margin</label>
-                        <input type="number" id="set-bird-margin" step="5">
-                    </div>
-                </div>
-                <!-- Group Traffic -->
-                <div class="setting-group" style="grid-column: span 2;">
-                    <div class="setting-group-title">Traffic & Difficulty</div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                        <div class="input-field"><label>Lanes</label><input type="number" id="set-traffic-lanes"
-                                value="3" step="1" min="1" max="10"></div>
-                        <div class="input-field"><label>Lane Height</label><input type="number"
-                                id="set-traffic-laneHeight" value="50" step="5"></div>
-                        <div class="input-field"><label>Base Speed Min</label><input type="number"
-                                id="set-traffic-baseSpeedMin" value="1" step="0.5"></div>
-                        <div class="input-field"><label>Base Speed Max</label><input type="number"
-                                id="set-traffic-baseSpeedMax" value="10" step="0.5"></div>
-                        <div class="input-field"><label>Spawn Delay (Initial)</label><input type="number"
-                                id="set-traffic-spawnTimerInitial" value="2000" step="100"></div>
-                        <div class="input-field"><label>Spawn Delay (Min)</label><input type="number"
-                                id="set-traffic-spawnTimerMin" value="600" step="100"></div>
-                        <div class="input-field"><label>Diff. Increase Int.</label><input type="number"
-                                id="set-traffic-difficultyInterval" value="15" step="5"></div>
-                        <div class="input-field"><label>Spawn Reduction</label><input type="number"
-                                id="set-traffic-difficultySpawnReduction" value="150" step="10"></div>
-                    </div>
-                </div>
-                <!-- Group Physics -->
-                <div class="setting-group">
-                    <div class="setting-group-title">Physics</div>
-                    <div class="input-field"><label>Poop Gravity</label><input type="number"
-                            id="set-physics-poopGravity" value="0.2" step="0.05"></div>
-                    <div class="input-field"><label>Initial Velocity</label><input type="number"
-                            id="set-physics-poopInitialVy" value="2" step="0.5"></div>
-                </div>
-                <!-- Group Gameplay -->
-                <div class="setting-group">
-                    <div class="setting-group-title">Gameplay</div>
-                    <div class="input-field"><label>Max Noise</label><input type="number" id="set-gameplay-noiseMax"
-                            value="100" step="10"></div>
-                    <div class="input-field"><label>Noise Decay</label><input type="number" id="set-gameplay-noiseDecay"
-                            value="0.05" step="0.01"></div>
-                    <div class="input-field"><label>Noise Incr./Honk</label><input type="number"
-                            id="set-gameplay-noiseIncrease" value="2" step="1"></div>
-                </div>
-                <!-- Group Environment -->
-                <div class="setting-group">
-                    <div class="setting-group-title">Environment</div>
-                    <div class="input-field"><label>Tree Count</label><input type="number"
-                            id="set-environment-treeCount" value="10" step="1"></div>
-                    <div class="input-field"><label>Shop Count</label><input type="number"
-                            id="set-environment-shopCount" value="5" step="1"></div>
-                    <div class="input-field"><label>Comm. Count</label><input type="number"
-                            id="set-environment-commercialCount" value="3" step="1"></div>
-                    <div class="input-field"><label>Cloud Count</label><input type="number"
-                            id="set-environment-cloudCount" value="20" step="1"></div>
-                    <div class="input-field"><label>Silhouette Count</label><input type="number"
-                            id="set-environment-silhouetteCount" step="1"></div>
-                    <div class="input-field"><label>Road Scroll Spd</label><input type="number"
-                            id="set-environment-scrollSpeedRoad" step="0.5"></div>
-                    <div class="input-field" style="grid-column: span 3;">
-                        <label>Background</label>
-                        <select id="set-environment-background"
-                            style="width:100%; background:rgba(0,0,0,0.3); color:white; border:1px solid rgba(255,255,255,0.1); padding:8px; border-radius:8px;">
-                            <option value="none">None (Gradient)</option>
-                            <option value="300ft">300ft View</option>
-                            <option value="desert">Desert View</option>
-                        </select>
-                    </div>
-                </div>
-                <!-- Group Audio -->
-                <div class="setting-group">
-                    <div class="setting-group-title">Audio</div>
-                    <div class="input-field"><label>Honk Volume</label><input type="number" id="set-audio-honkVolume"
-                            step="0.01" min="0" max="1"></div>
-                </div>
-                <!-- Group Food -->
-                <div class="setting-group" style="grid-column: span 2;">
-                    <div class="setting-group-title">Flying Food</div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
-                        <div class="input-field"><label>Spawn Min (ms)</label><input type="number"
-                                id="set-food-spawnTimerMin" step="100"></div>
-                        <div class="input-field"><label>Spawn Max (ms)</label><input type="number"
-                                id="set-food-spawnTimerMax" step="100"></div>
-                        <div class="input-field"><label>Speed Min</label><input type="number" id="set-food-speedMin"
-                                step="0.5"></div>
-                        <div class="input-field"><label>Speed Max</label><input type="number" id="set-food-speedMax"
-                                step="0.5"></div>
-                        <div class="input-field"><label>Gravity Incr.</label><input type="number"
-                                id="set-food-gravityIncrease" step="0.01"></div>
-                        <div class="input-field"><label>Food Size</label><input type="number" id="set-food-size"
-                                step="5"></div>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-small btn-secondary" onclick="closeSettings()">Cancel</button>
-                <button class="btn btn-small" onclick="saveSettings()">Save Changes</button>
-            </div>
+        <div id="new-highscore" class="high-score-tag hidden" style="margin-bottom: 20px;">NEW HIGH SCORE!</div>
+        <div id="leaderboard-rank" class="high-score-tag hidden" style="margin-bottom: 20px;"></div>
+        <div class="btn-group">
+            <button class="btn" onclick="showNameInput()">Fly Again</button>
+            <button class="btn btn-secondary" onclick="openLeaderboard()">Leaderboard</button>
         </div>
-
-        <!-- Game Over Screen -->
-        <div id="game-over-screen" class="screen hidden">
-            <h2 style="margin-bottom: 5px;">GAME OVER!</h2>
-            <div class="subtitle">The honking was too much!</div>
-
-            <div class="final-stats">
-                <div class="final-stat-item">
-                    <span class="final-stat-label">Time Survived</span>
-                    <span id="final-time" class="final-stat-value">0s</span>
-                </div>
-                <div class="final-stat-item">
-                    <span class="final-stat-label">Cars Silenced</span>
-                    <span id="final-silenced" class="final-stat-value">0</span>
-                </div>
-                <div class="final-stat-item">
-                    <span class="final-stat-label">Poops Dropped</span>
-                    <span id="final-poops" class="final-stat-value">0</span>
-                </div>
-                <div class="final-stat-item">
-                    <span class="final-stat-label">Final Level</span>
-                    <span id="final-level" class="final-stat-value">Lv 1</span>
-                </div>
-                <div class="final-stat-item"
-                    style="grid-column: span 2; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
-                    <span class="final-stat-label">Personal Best</span>
-                    <span id="final-best" class="final-stat-value" style="font-size: 1.2rem;">0s</span>
-                </div>
-            </div>
-
-            <div id="new-highscore" class="high-score-tag hidden" style="margin-bottom: 20px;">NEW HIGH SCORE!</div>
-            <button class="btn" onclick="startGame()">Fly Again</button>
-        </div>
+    </div>
     </div>
 
     <script>
@@ -632,8 +863,8 @@
         let settings = {
             bird: { speed: 7, size: 22, margin: 50 },
             physics: { poopGravity: 0.2, poopInitialVy: 2, poopDetectionRadius: 10 },
-            traffic: { lanes: 3, laneHeight: 50, roadY: 0.75, baseSpeedMin: 1, baseSpeedMax: 10, spawnTimerInitial: 2000, spawnTimerMin: 600, difficultySpawnReduction: 150, jamDistance: 150, slowDownFactor: 0.8, difficultyInterval: 15 },
-            audio: { honkVolume: 0.04, honkChanceNormal: 0.002, honkChanceJam: 0.02 },
+            traffic: { lanes: 3, laneHeight: 50, roadY: 0.75, baseSpeedMin: 1, baseSpeedMax: 2, spawnTimerInitial: 2000, spawnTimerMin: 600, difficultySpawnReduction: 150, jamDistance: 150, slowDownFactor: 0.8, difficultyInterval: 15 },
+            audio: { honkVolume: 0.1, honkChanceNormal: 0.002, honkChanceJam: 0.02 },
             gameplay: { noiseMax: 100, noiseDecay: 0.05, noiseIncrease: 2 },
             environment: { cloudSpeedMin: 0.2, cloudSpeedMax: 0.7, scrollSpeedRoad: 5, treeCount: 6, shopCount: 5, commercialCount: 3, cloudCount: 20, silhouetteCount: 15, silhouetteSize: 1, background: 'none' },
             food: { spawnTimerMin: 1500, spawnTimerMax: 4000, speedMin: 2, speedMax: 5, gravityIncrease: 0.05, size: 30 }
@@ -694,7 +925,9 @@
             if (gameAudio[key]) {
                 // Clone node to allow overlapping same sound
                 const s = gameAudio[key].cloneNode();
-                s.volume = settings.audio.honkVolume;
+                // Dynamic volume: scales from 0.1 (0% noise) to 1.0 (100% noise)
+                const noiseRatio = noiseLevel / settings.gameplay.noiseMax;
+                s.volume = Math.min(1.0, settings.audio.honkVolume + noiseRatio);
                 s.play().catch(e => console.warn('Honk play failed:', e));
             }
         }
@@ -708,6 +941,27 @@
         let carsSilenced = 0;
         let difficulty = 1;
         let highscore = localStorage.getItem('pooppatrol_highscore_horiz') || 0;
+        let score = 0;
+        let comboCount = 0;
+
+        // Player & Leaderboard State
+        let playerName = localStorage.getItem('pooppatrol_player_name') || '';
+        let lastSubmittedScore = null;
+        let previousScreen = 'title'; // Track where to return from leaderboard
+
+        // Leaderboard API Configuration
+        const BLOCKS_API = {
+            endpoint: 'https://dsjogn-dqnxc.seliseblocks.com/data/graphql',
+            key: '0E123141586144C6976FF44228A71D20'
+        };
+
+        // Screen Elements
+        const nameInputScreen = document.getElementById('name-input-screen');
+        const leaderboardScreen = document.getElementById('leaderboard-screen');
+        const playerNameInput = document.getElementById('player-name-input');
+        const nameError = document.getElementById('name-error');
+        const leaderboardContent = document.getElementById('leaderboard-content');
+        const leaderboardRank = document.getElementById('leaderboard-rank');
 
         function showNotification(text, type) {
             const el = document.createElement('div');
@@ -715,6 +969,16 @@
             el.innerHTML = `<span>${text}</span>`;
             notificationContainer.appendChild(el);
             setTimeout(() => el.remove(), 2500);
+        }
+
+        function showFloatingScore(x, y, amount, isCombo) {
+            const el = document.createElement('div');
+            el.className = `floating-score ${amount < 0 ? 'negative' : ''} ${isCombo ? 'combo' : ''}`;
+            el.innerText = amount > 0 ? `+${amount}` : amount;
+            el.style.left = x + 'px';
+            el.style.top = y + 'px';
+            document.body.appendChild(el); // Append to body or a specific container
+            setTimeout(() => el.remove(), 1000);
         }
 
         // World Objects
@@ -1000,6 +1264,9 @@
 
         function resetGame() {
             noiseLevel = 0; timeSeconds = 0; poopsDropped = 0; poopInventory = 100; carsSilenced = 0; difficulty = 1;
+            score = 0; comboCount = 0;
+            if (document.getElementById('score-val')) document.getElementById('score-val').innerText = '0';
+
             vehicles = []; poops = []; splats = []; foods = []; frameCount = 0;
             notificationContainer.innerHTML = '';
             bird.y = 150; bird.x = 200;
@@ -1012,8 +1279,11 @@
             initAudio();
             gameState = 'PLAYING';
             titleScreen.classList.add('hidden');
+            nameInputScreen.classList.add('hidden');
             gameOverScreen.classList.add('hidden');
+            leaderboardScreen.classList.add('hidden');
             ui.classList.remove('hidden');
+            document.getElementById('score-ui').classList.remove('hidden');
             resetGame();
             requestAnimationFrame(gameLoop);
         }
@@ -1021,12 +1291,14 @@
         function gameOver() {
             gameState = 'GAMEOVER';
             ui.classList.add('hidden');
+            document.getElementById('score-ui').classList.add('hidden');
             gameOverScreen.classList.remove('hidden');
 
             finalTime.innerText = Math.floor(timeSeconds) + 's';
             finalSilenced.innerText = carsSilenced;
             finalPoops.innerText = poopsDropped;
             finalLevel.innerText = 'Lv ' + difficulty;
+            document.getElementById('final-score').innerText = score;
 
             if (timeSeconds > highscore) {
                 highscore = Math.floor(timeSeconds);
@@ -1036,6 +1308,258 @@
                 newHighscoreTag.classList.add('hidden');
             }
             finalBest.innerText = highscore + 's';
+
+            // Submit score to leaderboard
+            if (playerName && score > 0) {
+                submitScore();
+            }
+        }
+
+        // ==================== LEADERBOARD FUNCTIONS ====================
+
+        // Show player name input screen
+        function showNameInput() {
+            titleScreen.classList.add('hidden');
+            gameOverScreen.classList.add('hidden');
+            nameInputScreen.classList.remove('hidden');
+            playerNameInput.value = playerName;
+            nameError.innerText = '';
+            playerNameInput.focus();
+        }
+
+        // Go back to title screen
+        function backToTitle() {
+            nameInputScreen.classList.add('hidden');
+            titleScreen.classList.remove('hidden');
+        }
+
+        // Validate name and start game
+        function confirmNameAndStart() {
+            const name = playerNameInput.value.trim();
+            if (name.length < 2) {
+                nameError.innerText = 'Name must be at least 2 characters';
+                return;
+            }
+            if (name.length > 20) {
+                nameError.innerText = 'Name must be 20 characters or less';
+                return;
+            }
+            playerName = name;
+            localStorage.setItem('pooppatrol_player_name', playerName);
+            nameError.innerText = '';
+            startGame();
+        }
+
+        // Allow Enter key to start game from name input
+        playerNameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                confirmNameAndStart();
+            }
+        });
+
+        // Open leaderboard screen
+        function openLeaderboard() {
+            previousScreen = gameState === 'GAMEOVER' ? 'gameover' : 'title';
+            titleScreen.classList.add('hidden');
+            gameOverScreen.classList.add('hidden');
+            leaderboardScreen.classList.remove('hidden');
+            fetchLeaderboard();
+        }
+
+        // Close leaderboard and return to previous screen
+        function closeLeaderboard() {
+            leaderboardScreen.classList.add('hidden');
+            if (previousScreen === 'gameover') {
+                gameOverScreen.classList.remove('hidden');
+            } else {
+                titleScreen.classList.remove('hidden');
+            }
+        }
+
+        // Fetch leaderboard from SELISE Blocks Cloud
+        async function fetchLeaderboard() {
+            leaderboardContent.innerHTML = '<div class="leaderboard-loading">Loading...</div>';
+
+            const query = `
+                query {
+                    HonkGameLeaderboards(
+                        orderBy: { Score: DESC }
+                        first: 10
+                    ) {
+                        items {
+                            ItemId
+                            PlayerName
+                            Score
+                            TimeSurvived
+                            CarsSilenced
+                            Level
+                            CreatedDate
+                        }
+                    }
+                }
+            `;
+
+            try {
+                const response = await fetch(BLOCKS_API.endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-blocks-key': BLOCKS_API.key
+                    },
+                    body: JSON.stringify({ query })
+                });
+
+                const result = await response.json();
+
+                if (result.data && result.data.HonkGameLeaderboards) {
+                    renderLeaderboard(result.data.HonkGameLeaderboards.items || []);
+                } else {
+                    leaderboardContent.innerHTML = '<div class="leaderboard-empty">No scores yet. Be the first!</div>';
+                }
+            } catch (error) {
+                console.error('Failed to fetch leaderboard:', error);
+                leaderboardContent.innerHTML = '<div class="leaderboard-empty">Failed to load leaderboard. Please try again.</div>';
+            }
+        }
+
+        // Render leaderboard table
+        function renderLeaderboard(entries) {
+            if (entries.length === 0) {
+                leaderboardContent.innerHTML = '<div class="leaderboard-empty">No scores yet. Be the first!</div>';
+                return;
+            }
+
+            let html = `
+                <table class="leaderboard-table">
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Player</th>
+                            <th>Score</th>
+                            <th>Time</th>
+                            <th>Level</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            entries.forEach((entry, index) => {
+                const rank = index + 1;
+                const isCurrentPlayer = entry.ItemId === lastSubmittedScore;
+                const rankClass = rank <= 3 ? `rank-${rank}` : 'rank-other';
+                const rowClass = isCurrentPlayer ? 'your-score-row' : '';
+
+                html += `
+                    <tr class="${rowClass}">
+                        <td><span class="rank-badge ${rankClass}">${rank}</span></td>
+                        <td>${escapeHtml(entry.PlayerName || 'Anonymous')}</td>
+                        <td style="color: var(--primary);">${entry.Score || 0}</td>
+                        <td>${entry.TimeSurvived || 0}s</td>
+                        <td>Lv ${entry.Level || 1}</td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            leaderboardContent.innerHTML = html;
+        }
+
+        // Submit score to SELISE Blocks Cloud
+        async function submitScore() {
+            const mutation = `
+                mutation($input: HonkGameLeaderboardInsertInput!) {
+                    insertHonkGameLeaderboard(input: $input) {
+                        ItemId
+                    }
+                }
+            `;
+
+            const variables = {
+                input: {
+                    PlayerName: playerName,
+                    Score: score,
+                    TimeSurvived: Math.floor(timeSeconds),
+                    CarsSilenced: carsSilenced,
+                    PoopsDropped: poopsDropped,
+                    Level: difficulty
+                }
+            };
+
+            try {
+                const response = await fetch(BLOCKS_API.endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-blocks-key': BLOCKS_API.key
+                    },
+                    body: JSON.stringify({ query: mutation, variables })
+                });
+
+                const result = await response.json();
+
+                if (result.data && result.data.insertHonkGameLeaderboard) {
+                    lastSubmittedScore = result.data.insertHonkGameLeaderboard.ItemId;
+                    console.log('Score submitted successfully:', lastSubmittedScore);
+
+                    // Check if player made it to top 10
+                    checkLeaderboardRank();
+                } else {
+                    console.warn('Score submission response:', result);
+                }
+            } catch (error) {
+                console.error('Failed to submit score:', error);
+            }
+        }
+
+        // Check player's rank after submission
+        async function checkLeaderboardRank() {
+            const query = `
+                query {
+                    HonkGameLeaderboards(
+                        orderBy: { Score: DESC }
+                        first: 10
+                    ) {
+                        items {
+                            ItemId
+                            Score
+                        }
+                    }
+                }
+            `;
+
+            try {
+                const response = await fetch(BLOCKS_API.endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-blocks-key': BLOCKS_API.key
+                    },
+                    body: JSON.stringify({ query })
+                });
+
+                const result = await response.json();
+
+                if (result.data && result.data.HonkGameLeaderboards) {
+                    const entries = result.data.HonkGameLeaderboards.items || [];
+                    const playerRank = entries.findIndex(e => e.ItemId === lastSubmittedScore) + 1;
+
+                    if (playerRank > 0 && playerRank <= 10) {
+                        leaderboardRank.innerText = `🏆 You ranked #${playerRank} on the leaderboard!`;
+                        leaderboardRank.classList.remove('hidden');
+                    } else {
+                        leaderboardRank.classList.add('hidden');
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to check rank:', error);
+            }
+        }
+
+        // Escape HTML to prevent XSS
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         }
 
         // The original dropPoop function is no longer called by keypress, but kept for reference or other uses.
@@ -1066,7 +1590,9 @@
                 width: cat === 'truck' || cat === 'bus' ? 120 : 80,
                 height: cat === 'truck' || cat === 'bus' ? 50 : 40,
                 vy: 0,
-                angle: 0
+                angle: 0,
+                isHonking: false,
+                honkTimer: 0
             });
         }
 
@@ -1238,8 +1764,8 @@
 
                 v.x += v.speed;
 
-                if (!v.pooped) {
-                    // Honk logic
+                if (!v.pooped && v.type !== 'emergency') {
+                    // Honk logic (emergency vehicles never honk)
                     let honkChance = 0;
                     if (isStuck && v.speed < 1) {
                         // Almost stopped
@@ -1253,9 +1779,11 @@
                     }
 
                     if (Math.random() < honkChance) {
-                        v.shake = 10;
+                        v.shake = 20;
                         noiseLevel += settings.gameplay.noiseIncrease;
                         playHonk(v.type);
+                        v.isHonking = true; // Permanently honking once triggered
+
                         // Spawn visual sound wave
                         honkEffects.push({
                             x: v.x,
@@ -1267,6 +1795,7 @@
                         });
                     }
                 }
+
                 if (v.shake > 0) v.shake *= 0.85;
 
                 // Poop collision
@@ -1276,6 +1805,30 @@
                         if (!v.pooped) {
                             v.pooped = true;
                             carsSilenced++;
+
+                            // Scoring Logic
+                            let points = 0;
+                            let isCombo = false;
+
+                            if (v.type === 'emergency') {
+                                // Hit emergency vehicle: -1
+                                points = -1;
+                                comboCount = 0;
+                            } else if (v.isHonking) {
+                                // Hit honking car: +2, +4, +6... (linear combo)
+                                comboCount++;
+                                points = 2 * comboCount; // 1st: 2, 2nd: 4, 3rd: 6...
+                                if (comboCount > 1) isCombo = true;
+                            } else {
+                                // Hit non-honking car: -1
+                                points = -1;
+                                comboCount = 0;
+                            }
+
+                            score += points;
+                            document.getElementById('score-val').innerText = score;
+                            showFloatingScore(v.x, v.y - 50, points, isCombo);
+
                             showNotification(`Silenced! (${carsSilenced})`, 'silenced');
                             splats.push({ vId: v.id, lx: poop.x - v.x, ly: poop.y - v.y, s: 30 + Math.random() * 10, image: dropImages['car'] });
                             playSound('splat');
@@ -1293,7 +1846,10 @@
             for (let i = poops.length - 1; i >= 0; i--) {
                 poops[i].y += poops[i].vy;
                 poops[i].vy += settings.physics.poopGravity;
-                if (poops[i].y > canvas.height) poops.splice(i, 1);
+                if (poops[i].y > canvas.height) {
+                    poops.splice(i, 1);
+                    comboCount = 0; // Missed! Combo reset.
+                }
             }
 
             noiseLevel = Math.max(0, noiseLevel - settings.gameplay.noiseDecay);
