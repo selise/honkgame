@@ -951,7 +951,7 @@
 
         // Leaderboard API Configuration
         const BLOCKS_API = {
-            endpoint: 'https://dsjogn-dqnxc.seliseblocks.com/data/graphql',
+            endpoint: 'https://api.seliseblocks.com/data/v1/gateway',
             key: '0E123141586144C6976FF44228A71D20'
         };
 
@@ -1382,10 +1382,15 @@
 
             const query = `
                 query {
-                    HonkGameLeaderboards(
-                        orderBy: { Score: DESC }
-                        first: 10
+                    getHonkGameLeaderboards(
+                        input: {
+                            filter: "{}",
+                            sort: "{\\\"Score\\\": -1}",
+                            pageNo: 1,
+                            pageSize: 10
+                        }
                     ) {
+                        totalCount
                         items {
                             ItemId
                             PlayerName
@@ -1411,8 +1416,8 @@
 
                 const result = await response.json();
 
-                if (result.data && result.data.HonkGameLeaderboards) {
-                    renderLeaderboard(result.data.HonkGameLeaderboards.items || []);
+                if (result.data && result.data.getHonkGameLeaderboards) {
+                    renderLeaderboard(result.data.getHonkGameLeaderboards.items || []);
                 } else {
                     leaderboardContent.innerHTML = '<div class="leaderboard-empty">No scores yet. Be the first!</div>';
                 }
@@ -1469,7 +1474,9 @@
             const mutation = `
                 mutation($input: HonkGameLeaderboardInsertInput!) {
                     insertHonkGameLeaderboard(input: $input) {
-                        ItemId
+                        itemId
+                        acknowledged
+                        totalImpactedData
                     }
                 }
             `;
@@ -1498,7 +1505,7 @@
                 const result = await response.json();
 
                 if (result.data && result.data.insertHonkGameLeaderboard) {
-                    lastSubmittedScore = result.data.insertHonkGameLeaderboard.ItemId;
+                    lastSubmittedScore = result.data.insertHonkGameLeaderboard.itemId;
                     console.log('Score submitted successfully:', lastSubmittedScore);
 
                     // Check if player made it to top 10
@@ -1515,9 +1522,13 @@
         async function checkLeaderboardRank() {
             const query = `
                 query {
-                    HonkGameLeaderboards(
-                        orderBy: { Score: DESC }
-                        first: 10
+                    getHonkGameLeaderboards(
+                        input: {
+                            filter: "{}",
+                            sort: "{\\\"Score\\\": -1}",
+                            pageNo: 1,
+                            pageSize: 10
+                        }
                     ) {
                         items {
                             ItemId
@@ -1539,8 +1550,8 @@
 
                 const result = await response.json();
 
-                if (result.data && result.data.HonkGameLeaderboards) {
-                    const entries = result.data.HonkGameLeaderboards.items || [];
+                if (result.data && result.data.getHonkGameLeaderboards) {
+                    const entries = result.data.getHonkGameLeaderboards.items || [];
                     const playerRank = entries.findIndex(e => e.ItemId === lastSubmittedScore) + 1;
 
                     if (playerRank > 0 && playerRank <= 10) {
