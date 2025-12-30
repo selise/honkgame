@@ -1213,7 +1213,14 @@
             key: '0E123141586144C6976FF44228A71D20'
         };
 
-        // IAM API Configuration (Dev Environment)
+        // Authentication API Configuration (Dev Environment)
+        // Docs: https://api.seliseblocks.com/authentication/v1/swagger/index.html
+        const AUTH_API = {
+            baseUrl: 'https://api.seliseblocks.com/authentication/v1',
+            key: '0E123141586144C6976FF44228A71D20'
+        };
+        
+        // IAM API for user registration
         const IAM_API = {
             baseUrl: 'https://api.seliseblocks.com/iam/v1',
             key: '0E123141586144C6976FF44228A71D20'
@@ -1318,10 +1325,11 @@
             document.getElementById('register-success').textContent = '';
         }
 
-        // Handle login
+        // Handle login using GraphQL data gateway (dev environment)
+        // Authenticates against HonkGameUsers schema
         async function handleLogin(event) {
             event.preventDefault();
-            const email = document.getElementById('login-email').value.trim();
+            const email = document.getElementById('login-email').value.trim().toLowerCase();
             const password = document.getElementById('login-password').value;
             const errorEl = document.getElementById('login-error');
             const submitBtn = document.getElementById('login-submit');
@@ -1331,30 +1339,57 @@
             submitBtn.textContent = 'Logging in...';
 
             try {
-                const response = await fetch(`${IAM_API.baseUrl}/account/authenticate`, {
+                // Hash the password to compare
+                const passwordHash = await simpleHash(password);
+
+                // Find user by email and password hash
+                const query = `
+                    query {
+                        getHonkGameUsers(
+                            input: {
+                                filter: "{\\"Email\\": \\"${email}\\", \\"PasswordHash\\": \\"${passwordHash}\\"}",
+                                pageNo: 1,
+                                pageSize: 1
+                            }
+                        ) {
+                            totalCount
+                            items {
+                                ItemId
+                                Email
+                                Username
+                            }
+                        }
+                    }
+                `;
+
+                const response = await fetch(BLOCKS_API.endpoint, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'x-blocks-key': IAM_API.key
+                        'x-blocks-key': BLOCKS_API.key
                     },
-                    body: JSON.stringify({
-                        username: email,
-                        password: password,
-                        grantType: 'password'
-                    })
+                    body: JSON.stringify({ query })
                 });
 
                 const result = await response.json();
 
-                if (response.ok && result.accessToken) {
+                if (result.data?.getHonkGameUsers?.totalCount > 0) {
                     // Login successful
+                    const user = result.data.getHonkGameUsers.items[0];
                     const expiresAt = new Date();
-                    expiresAt.setMinutes(expiresAt.getMinutes() + (result.expiresInMinutes || 15));
+                    expiresAt.setHours(expiresAt.getHours() + 24); // 24 hour session
+
+                    // Generate a simple session token
+                    const sessionToken = await simpleHash(user.ItemId + Date.now());
 
                     authState = {
                         isLoggedIn: true,
-                        user: { email: email, id: result.userId },
-                        token: result.accessToken
+                        user: { 
+                            email: user.Email, 
+                            id: user.ItemId,
+                            username: user.Username 
+                        },
+                        token: sessionToken
                     };
 
                     // Save to localStorage
@@ -1364,9 +1399,9 @@
                         expiresAt: expiresAt.toISOString()
                     }));
 
-                    // Also use email as player name if not set
+                    // Also use username as player name if not set
                     if (!playerName) {
-                        playerName = email.split('@')[0];
+                        playerName = user.Username || email.split('@')[0];
                         localStorage.setItem('pooppatrol_player_name', playerName);
                     }
 
@@ -1375,7 +1410,7 @@
                     showNotification('Login successful!', 'stock');
                 } else {
                     // Login failed
-                    errorEl.textContent = result.message || result.error || 'Invalid email or password';
+                    errorEl.textContent = 'Invalid email or password';
                 }
             } catch (error) {
                 console.error('Login error:', error);
@@ -1386,10 +1421,19 @@
             }
         }
 
-        // Handle registration
+        // Simple hash function for dev environment (NOT for production!)
+        async function simpleHash(str) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(str + AUTH_API.key); // Salt with API key
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        // Handle registration using GraphQL data gateway (dev environment)
         async function handleRegister(event) {
             event.preventDefault();
-            const email = document.getElementById('register-email').value.trim();
+            const email = document.getElementById('register-email').value.trim().toLowerCase();
             const password = document.getElementById('register-password').value;
             const confirm = document.getElementById('register-confirm').value;
             const errorEl = document.getElementById('register-error');
@@ -1420,23 +1464,71 @@
             submitBtn.textContent = 'Creating account...';
 
             try {
-                const response = await fetch(`${IAM_API.baseUrl}/account/register`, {
+                // Check if user already exists
+                const checkQuery = `
+                    query {
+                        getHonkGameUsers(
+                            input: {
+                                filter: "{\\"Email\\": \\"${email}\\"}",
+                                pageNo: 1,
+                                pageSize: 1
+                            }
+                        ) {
+                            totalCount
+                        }
+                    }
+                `;
+
+                const checkResponse = await fetch(BLOCKS_API.endpoint, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'x-blocks-key': IAM_API.key
+                        'x-blocks-key': BLOCKS_API.key
                     },
-                    body: JSON.stringify({
-                        email: email,
-                        password: password,
-                        confirmPassword: password,
-                        username: email.split('@')[0]
-                    })
+                    body: JSON.stringify({ query: checkQuery })
+                });
+
+                const checkResult = await checkResponse.json();
+                
+                if (checkResult.data?.getHonkGameUsers?.totalCount > 0) {
+                    errorEl.textContent = 'An account with this email already exists';
+                    return;
+                }
+
+                // Hash the password
+                const passwordHash = await simpleHash(password);
+
+                // Create new user
+                const mutation = `
+                    mutation($input: HonkGameUserInsertInput!) {
+                        insertHonkGameUser(input: $input) {
+                            itemId
+                            acknowledged
+                        }
+                    }
+                `;
+
+                const variables = {
+                    input: {
+                        Email: email,
+                        PasswordHash: passwordHash,
+                        Username: email.split('@')[0],
+                        CreatedAt: new Date().toISOString()
+                    }
+                };
+
+                const response = await fetch(BLOCKS_API.endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-blocks-key': BLOCKS_API.key
+                    },
+                    body: JSON.stringify({ query: mutation, variables })
                 });
 
                 const result = await response.json();
 
-                if (response.ok && (result.success || result.userId || response.status === 201)) {
+                if (result.data?.insertHonkGameUser?.acknowledged) {
                     // Registration successful
                     successEl.textContent = 'Account created! You can now login.';
                     document.getElementById('register-form').reset();
@@ -1446,9 +1538,11 @@
                         switchAuthTab('login');
                         document.getElementById('login-email').value = email;
                     }, 2000);
+                } else if (result.errors) {
+                    console.error('GraphQL errors:', result.errors);
+                    errorEl.textContent = 'Registration failed. Please try again.';
                 } else {
-                    // Registration failed
-                    errorEl.textContent = result.message || result.error || 'Registration failed. Try a different email.';
+                    errorEl.textContent = 'Registration failed. Please try again.';
                 }
             } catch (error) {
                 console.error('Registration error:', error);
