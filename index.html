@@ -603,6 +603,211 @@
             gap: 15px;
             margin-top: 20px;
         }
+
+        /* Auth Modal Styles */
+        .auth-modal {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            z-index: 50;
+        }
+
+        .auth-container {
+            background: rgba(20, 20, 30, 0.95);
+            border-radius: 24px;
+            padding: 40px;
+            width: 420px;
+            max-width: 90vw;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+        }
+
+        .auth-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .auth-tab {
+            flex: 1;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: none;
+            border-radius: 12px;
+            color: #888;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .auth-tab.active {
+            background: var(--primary);
+            color: #000;
+        }
+
+        .auth-tab:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        .auth-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .auth-input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .auth-input-group label {
+            font-size: 0.85rem;
+            color: #aaa;
+            font-weight: 600;
+        }
+
+        .auth-input {
+            background: rgba(0, 0, 0, 0.4);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 14px 18px;
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .auth-input:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.2);
+        }
+
+        .auth-input::placeholder {
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        .auth-error {
+            color: var(--danger);
+            font-size: 0.85rem;
+            min-height: 1.2em;
+            text-align: center;
+        }
+
+        .auth-success {
+            color: var(--success);
+            font-size: 0.85rem;
+            min-height: 1.2em;
+            text-align: center;
+        }
+
+        .auth-btn {
+            background: var(--primary);
+            color: #000;
+            border: none;
+            padding: 14px;
+            font-size: 1.1rem;
+            font-weight: 900;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .auth-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(255, 215, 0, 0.4);
+        }
+
+        .auth-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .auth-close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .auth-close:hover {
+            color: #fff;
+        }
+
+        .auth-divider {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: #666;
+            font-size: 0.85rem;
+        }
+
+        .auth-divider::before,
+        .auth-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .user-badge {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(76, 175, 80, 0.2);
+            padding: 8px 15px;
+            border-radius: 20px;
+            border: 1px solid rgba(76, 175, 80, 0.3);
+            color: var(--success);
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .user-badge .logout-btn {
+            background: none;
+            border: none;
+            color: #ff6b6b;
+            cursor: pointer;
+            padding: 2px 8px;
+            font-size: 0.8rem;
+            opacity: 0.8;
+            transition: opacity 0.2s;
+        }
+
+        .user-badge .logout-btn:hover {
+            opacity: 1;
+        }
+
+        .btn-login {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-login:hover {
+            background: rgba(255, 255, 255, 0.2);
+            box-shadow: none;
+        }
+
+        .password-requirements {
+            font-size: 0.75rem;
+            color: #666;
+            margin-top: -10px;
+        }
     </style>
 </head>
 
@@ -641,18 +846,71 @@
     <div id="title-screen" class="screen">
         <h1>POOP PATROL</h1>
         <div class="subtitle">Horizontal Poopage</div>
+        
+        <!-- User Status Badge -->
+        <div id="user-status" style="margin-top: -20px; margin-bottom: 15px;"></div>
+        
         <div id="settings-status"
-            style="margin-top: -30px; margin-bottom: 20px; font-size: 0.8rem; color: #fff; background: rgba(0,0,0,0.4); padding: 5px 15px; border-radius: 20px;">
+            style="margin-top: -10px; margin-bottom: 20px; font-size: 0.8rem; color: #fff; background: rgba(0,0,0,0.4); padding: 5px 15px; border-radius: 20px;">
             Checking settings...</div>
-        <div style="display: flex; gap: 20px;">
+        <div style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;">
             <button class="btn" onclick="showNameInput()">Start Flight</button>
             <button class="btn btn-secondary" onclick="openLeaderboard()">Leaderboard</button>
-            <button class="btn btn-secondary" onclick="openSettings()">Settings</button>
+            <button id="settings-btn" class="btn btn-secondary hidden" onclick="openSettings()">Settings</button>
+            <button id="login-btn" class="btn btn-secondary btn-login" onclick="openAuthModal()">Login</button>
         </div>
         <div class="instructions">
             <div><span class="instruction-key">W A S D</span> / <span class="instruction-key">&uarr; &larr; &darr;
                     &rarr;</span> Move Bird</div>
             <div><span class="instruction-key">SPACE</span> Poop on Traffic</div>
+        </div>
+    </div>
+
+    <!-- Auth Modal -->
+    <div id="auth-modal" class="auth-modal hidden">
+        <div class="auth-container" style="position: relative;">
+            <button class="auth-close" onclick="closeAuthModal()">&times;</button>
+            <h2 style="margin: 0 0 10px 0; color: var(--primary); text-align: center;">Welcome Pilot!</h2>
+            <p style="text-align: center; color: #888; margin-bottom: 25px; font-size: 0.9rem;">Login to access advanced settings</p>
+            
+            <div class="auth-tabs">
+                <button id="tab-login" class="auth-tab active" onclick="switchAuthTab('login')">Login</button>
+                <button id="tab-register" class="auth-tab" onclick="switchAuthTab('register')">Register</button>
+            </div>
+
+            <!-- Login Form -->
+            <form id="login-form" class="auth-form" onsubmit="handleLogin(event)">
+                <div class="auth-input-group">
+                    <label for="login-email">Email</label>
+                    <input type="email" id="login-email" class="auth-input" placeholder="your@email.com" required>
+                </div>
+                <div class="auth-input-group">
+                    <label for="login-password">Password</label>
+                    <input type="password" id="login-password" class="auth-input" placeholder="Enter password" required>
+                </div>
+                <div id="login-error" class="auth-error"></div>
+                <button type="submit" id="login-submit" class="auth-btn">Login</button>
+            </form>
+
+            <!-- Register Form -->
+            <form id="register-form" class="auth-form hidden" onsubmit="handleRegister(event)">
+                <div class="auth-input-group">
+                    <label for="register-email">Email</label>
+                    <input type="email" id="register-email" class="auth-input" placeholder="your@email.com" required>
+                </div>
+                <div class="auth-input-group">
+                    <label for="register-password">Password</label>
+                    <input type="password" id="register-password" class="auth-input" placeholder="Create password" required minlength="8">
+                    <div class="password-requirements">Min 8 characters, include uppercase, lowercase, number</div>
+                </div>
+                <div class="auth-input-group">
+                    <label for="register-confirm">Confirm Password</label>
+                    <input type="password" id="register-confirm" class="auth-input" placeholder="Confirm password" required>
+                </div>
+                <div id="register-error" class="auth-error"></div>
+                <div id="register-success" class="auth-success"></div>
+                <button type="submit" id="register-submit" class="auth-btn">Create Account</button>
+            </form>
         </div>
     </div>
 
@@ -955,6 +1213,282 @@
             key: '0E123141586144C6976FF44228A71D20'
         };
 
+        // IAM API Configuration (Dev Environment)
+        const IAM_API = {
+            baseUrl: 'https://api.seliseblocks.com/iam/v1',
+            key: '0E123141586144C6976FF44228A71D20'
+        };
+
+        // Auth State
+        let authState = {
+            isLoggedIn: false,
+            user: null,
+            token: null
+        };
+
+        // Initialize auth state from localStorage
+        function initAuthState() {
+            const savedAuth = localStorage.getItem('pooppatrol_auth');
+            if (savedAuth) {
+                try {
+                    const parsed = JSON.parse(savedAuth);
+                    // Check if token is still valid (simple expiry check)
+                    if (parsed.expiresAt && new Date(parsed.expiresAt) > new Date()) {
+                        authState = {
+                            isLoggedIn: true,
+                            user: parsed.user,
+                            token: parsed.token
+                        };
+                    } else {
+                        // Token expired, clear storage
+                        localStorage.removeItem('pooppatrol_auth');
+                    }
+                } catch (e) {
+                    console.warn('Failed to parse saved auth state:', e);
+                    localStorage.removeItem('pooppatrol_auth');
+                }
+            }
+            updateAuthUI();
+        }
+
+        // Update UI based on auth state
+        function updateAuthUI() {
+            const settingsBtn = document.getElementById('settings-btn');
+            const loginBtn = document.getElementById('login-btn');
+            const userStatus = document.getElementById('user-status');
+
+            if (authState.isLoggedIn && authState.user) {
+                // User is logged in
+                settingsBtn.classList.remove('hidden');
+                loginBtn.classList.add('hidden');
+                userStatus.innerHTML = `
+                    <div class="user-badge">
+                        <span>👤 ${escapeHtml(authState.user.email || authState.user.username || 'User')}</span>
+                        <button class="logout-btn" onclick="handleLogout()">Logout</button>
+                    </div>
+                `;
+            } else {
+                // User is not logged in
+                settingsBtn.classList.add('hidden');
+                loginBtn.classList.remove('hidden');
+                userStatus.innerHTML = '';
+            }
+        }
+
+        // Open auth modal
+        function openAuthModal() {
+            document.getElementById('auth-modal').classList.remove('hidden');
+            document.getElementById('login-email').focus();
+            // Reset forms
+            document.getElementById('login-form').reset();
+            document.getElementById('register-form').reset();
+            document.getElementById('login-error').textContent = '';
+            document.getElementById('register-error').textContent = '';
+            document.getElementById('register-success').textContent = '';
+        }
+
+        // Close auth modal
+        function closeAuthModal() {
+            document.getElementById('auth-modal').classList.add('hidden');
+        }
+
+        // Switch between login and register tabs
+        function switchAuthTab(tab) {
+            const loginTab = document.getElementById('tab-login');
+            const registerTab = document.getElementById('tab-register');
+            const loginForm = document.getElementById('login-form');
+            const registerForm = document.getElementById('register-form');
+
+            if (tab === 'login') {
+                loginTab.classList.add('active');
+                registerTab.classList.remove('active');
+                loginForm.classList.remove('hidden');
+                registerForm.classList.add('hidden');
+                document.getElementById('login-email').focus();
+            } else {
+                registerTab.classList.add('active');
+                loginTab.classList.remove('active');
+                registerForm.classList.remove('hidden');
+                loginForm.classList.add('hidden');
+                document.getElementById('register-email').focus();
+            }
+            // Clear errors
+            document.getElementById('login-error').textContent = '';
+            document.getElementById('register-error').textContent = '';
+            document.getElementById('register-success').textContent = '';
+        }
+
+        // Handle login
+        async function handleLogin(event) {
+            event.preventDefault();
+            const email = document.getElementById('login-email').value.trim();
+            const password = document.getElementById('login-password').value;
+            const errorEl = document.getElementById('login-error');
+            const submitBtn = document.getElementById('login-submit');
+
+            errorEl.textContent = '';
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Logging in...';
+
+            try {
+                const response = await fetch(`${IAM_API.baseUrl}/account/authenticate`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-blocks-key': IAM_API.key
+                    },
+                    body: JSON.stringify({
+                        username: email,
+                        password: password,
+                        grantType: 'password'
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.accessToken) {
+                    // Login successful
+                    const expiresAt = new Date();
+                    expiresAt.setMinutes(expiresAt.getMinutes() + (result.expiresInMinutes || 15));
+
+                    authState = {
+                        isLoggedIn: true,
+                        user: { email: email, id: result.userId },
+                        token: result.accessToken
+                    };
+
+                    // Save to localStorage
+                    localStorage.setItem('pooppatrol_auth', JSON.stringify({
+                        user: authState.user,
+                        token: authState.token,
+                        expiresAt: expiresAt.toISOString()
+                    }));
+
+                    // Also use email as player name if not set
+                    if (!playerName) {
+                        playerName = email.split('@')[0];
+                        localStorage.setItem('pooppatrol_player_name', playerName);
+                    }
+
+                    updateAuthUI();
+                    closeAuthModal();
+                    showNotification('Login successful!', 'stock');
+                } else {
+                    // Login failed
+                    errorEl.textContent = result.message || result.error || 'Invalid email or password';
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                errorEl.textContent = 'Connection error. Please try again.';
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Login';
+            }
+        }
+
+        // Handle registration
+        async function handleRegister(event) {
+            event.preventDefault();
+            const email = document.getElementById('register-email').value.trim();
+            const password = document.getElementById('register-password').value;
+            const confirm = document.getElementById('register-confirm').value;
+            const errorEl = document.getElementById('register-error');
+            const successEl = document.getElementById('register-success');
+            const submitBtn = document.getElementById('register-submit');
+
+            errorEl.textContent = '';
+            successEl.textContent = '';
+
+            // Validate password match
+            if (password !== confirm) {
+                errorEl.textContent = 'Passwords do not match';
+                return;
+            }
+
+            // Validate password strength
+            if (password.length < 8) {
+                errorEl.textContent = 'Password must be at least 8 characters';
+                return;
+            }
+
+            if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password)) {
+                errorEl.textContent = 'Password must include uppercase, lowercase, and number';
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Creating account...';
+
+            try {
+                const response = await fetch(`${IAM_API.baseUrl}/account/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-blocks-key': IAM_API.key
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        password: password,
+                        confirmPassword: password,
+                        username: email.split('@')[0]
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok && (result.success || result.userId || response.status === 201)) {
+                    // Registration successful
+                    successEl.textContent = 'Account created! You can now login.';
+                    document.getElementById('register-form').reset();
+                    
+                    // Auto-switch to login after 2 seconds
+                    setTimeout(() => {
+                        switchAuthTab('login');
+                        document.getElementById('login-email').value = email;
+                    }, 2000);
+                } else {
+                    // Registration failed
+                    errorEl.textContent = result.message || result.error || 'Registration failed. Try a different email.';
+                }
+            } catch (error) {
+                console.error('Registration error:', error);
+                errorEl.textContent = 'Connection error. Please try again.';
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Create Account';
+            }
+        }
+
+        // Handle logout
+        function handleLogout() {
+            authState = {
+                isLoggedIn: false,
+                user: null,
+                token: null
+            };
+            localStorage.removeItem('pooppatrol_auth');
+            updateAuthUI();
+            showNotification('Logged out', 'silenced');
+        }
+
+        // Close auth modal when clicking outside
+        document.addEventListener('click', (e) => {
+            const modal = document.getElementById('auth-modal');
+            if (e.target === modal) {
+                closeAuthModal();
+            }
+        });
+
+        // Close auth modal with Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                const modal = document.getElementById('auth-modal');
+                if (!modal.classList.contains('hidden')) {
+                    closeAuthModal();
+                }
+            }
+        });
+
         // Screen Elements
         const nameInputScreen = document.getElementById('name-input-screen');
         const leaderboardScreen = document.getElementById('leaderboard-screen');
@@ -1140,6 +1674,7 @@
             syncSettingsToUI(); // Initial defaults
             await loadSettings();
             syncSettingsToUI(); // After JSON load
+            initAuthState(); // Initialize auth from localStorage
             resize();
             draw();
         }
