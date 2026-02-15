@@ -1213,16 +1213,10 @@
             key: '0E123141586144C6976FF44228A71D20'
         };
 
-        // Authentication API Configuration (Dev Environment)
-        // Docs: https://api.seliseblocks.com/authentication/v1/swagger/index.html
-        const AUTH_API = {
-            baseUrl: 'https://api.seliseblocks.com/authentication/v1',
-            key: '0E123141586144C6976FF44228A71D20'
-        };
-        
-        // IAM API for user registration
-        const IAM_API = {
-            baseUrl: 'https://api.seliseblocks.com/iam/v1',
+        // Blocks IDP API Configuration (Production-grade)
+        // Docs: https://api.seliseblocks.com/idp/v1/swagger/index.html
+        const IDP_API = {
+            baseUrl: 'https://api.seliseblocks.com/idp/v1',
             key: '0E123141586144C6976FF44228A71D20'
         };
 
@@ -1230,24 +1224,116 @@
         let authState = {
             isLoggedIn: false,
             user: null,
-            token: null
+            accessToken: null,
+            refreshToken: null
         };
 
+        // Parse JWT payload without library
+        function parseJwt(token) {
+            try {
+                const base64Url = token.split('.')[1];
+                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                const jsonPayload = decodeURIComponent(
+                    atob(base64).split('').map(c =>
+                        '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+                    ).join('')
+                );
+                return JSON.parse(jsonPayload);
+            } catch (e) {
+                return null;
+            }
+        }
+
+        // Check if a JWT is expired
+        function isTokenExpired(token) {
+            const payload = parseJwt(token);
+            if (!payload || !payload.exp) return true;
+            // Add 30 second buffer
+            return (payload.exp * 1000) < (Date.now() + 30000);
+        }
+
+        // Fetch user info from IDP using access token
+        async function fetchUserInfo(accessToken) {
+            try {
+                const response = await fetch(`${IDP_API.baseUrl}/Authentication/GetUserInfo`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'x-blocks-key': IDP_API.key
+                    }
+                });
+                if (response.ok) {
+                    return await response.json();
+                }
+                return null;
+            } catch (e) {
+                console.warn('Failed to fetch user info:', e);
+                return null;
+            }
+        }
+
+        // Refresh the access token using refresh_token grant
+        async function refreshAccessToken(refreshToken) {
+            try {
+                const formData = new FormData();
+                formData.append('grant_type', 'refresh_token');
+                formData.append('refresh_token', refreshToken);
+
+                const response = await fetch(`${IDP_API.baseUrl}/Authentication/Token`, {
+                    method: 'POST',
+                    headers: {
+                        'x-blocks-key': IDP_API.key
+                    },
+                    body: formData
+                });
+
+                if (response.ok) {
+                    return await response.json();
+                }
+                return null;
+            } catch (e) {
+                console.warn('Token refresh failed:', e);
+                return null;
+            }
+        }
+
         // Initialize auth state from localStorage
-        function initAuthState() {
+        async function initAuthState() {
             const savedAuth = localStorage.getItem('pooppatrol_auth');
             if (savedAuth) {
                 try {
                     const parsed = JSON.parse(savedAuth);
-                    // Check if token is still valid (simple expiry check)
-                    if (parsed.expiresAt && new Date(parsed.expiresAt) > new Date()) {
+
+                    if (parsed.accessToken && !isTokenExpired(parsed.accessToken)) {
+                        // Access token still valid
                         authState = {
                             isLoggedIn: true,
                             user: parsed.user,
-                            token: parsed.token
+                            accessToken: parsed.accessToken,
+                            refreshToken: parsed.refreshToken
                         };
+                    } else if (parsed.refreshToken) {
+                        // Try to refresh the token
+                        const tokenResult = await refreshAccessToken(parsed.refreshToken);
+                        if (tokenResult && tokenResult.access_token) {
+                            const userInfo = await fetchUserInfo(tokenResult.access_token);
+                            authState = {
+                                isLoggedIn: true,
+                                user: userInfo || parsed.user,
+                                accessToken: tokenResult.access_token,
+                                refreshToken: tokenResult.refresh_token || parsed.refreshToken
+                            };
+                            // Save updated tokens
+                            localStorage.setItem('pooppatrol_auth', JSON.stringify({
+                                user: authState.user,
+                                accessToken: authState.accessToken,
+                                refreshToken: authState.refreshToken
+                            }));
+                        } else {
+                            // Refresh failed, clear auth
+                            localStorage.removeItem('pooppatrol_auth');
+                        }
                     } else {
-                        // Token expired, clear storage
                         localStorage.removeItem('pooppatrol_auth');
                     }
                 } catch (e) {
@@ -1268,9 +1354,10 @@
                 // User is logged in
                 settingsBtn.classList.remove('hidden');
                 loginBtn.classList.add('hidden');
+                const displayName = authState.user.email || authState.user.userName || authState.user.username || authState.user.sub || 'User';
                 userStatus.innerHTML = `
                     <div class="user-badge">
-                        <span>👤 ${escapeHtml(authState.user.email || authState.user.username || 'User')}</span>
+                        <span>👤 ${escapeHtml(displayName)}</span>
                         <button class="logout-btn" onclick="handleLogout()">Logout</button>
                     </div>
                 `;
@@ -1325,8 +1412,7 @@
             document.getElementById('register-success').textContent = '';
         }
 
-        // Handle login using GraphQL data gateway (dev environment)
-        // Authenticates against HonkGameUsers schema
+        // Handle login via Blocks IDP Token endpoint (OAuth2 password grant)
         async function handleLogin(event) {
             event.preventDefault();
             const email = document.getElementById('login-email').value.trim().toLowerCase();
@@ -1339,69 +1425,49 @@
             submitBtn.textContent = 'Logging in...';
 
             try {
-                // Hash the password to compare
-                const passwordHash = await simpleHash(password);
+                // Use OAuth2 password grant via IDP Token endpoint
+                const formData = new FormData();
+                formData.append('grant_type', 'password');
+                formData.append('username', email);
+                formData.append('password', password);
+                formData.append('scope', 'openid profile email');
 
-                // Find user by email and password hash
-                const query = `
-                    query {
-                        getHonkGameUsers(
-                            input: {
-                                filter: "{\\"Email\\": \\"${email}\\", \\"PasswordHash\\": \\"${passwordHash}\\"}",
-                                pageNo: 1,
-                                pageSize: 1
-                            }
-                        ) {
-                            totalCount
-                            items {
-                                ItemId
-                                Email
-                                Username
-                            }
-                        }
-                    }
-                `;
-
-                const response = await fetch(BLOCKS_API.endpoint, {
+                const response = await fetch(`${IDP_API.baseUrl}/Authentication/Token`, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
-                        'x-blocks-key': BLOCKS_API.key
+                        'x-blocks-key': IDP_API.key
                     },
-                    body: JSON.stringify({ query })
+                    body: formData
                 });
 
                 const result = await response.json();
 
-                if (result.data?.getHonkGameUsers?.totalCount > 0) {
-                    // Login successful
-                    const user = result.data.getHonkGameUsers.items[0];
-                    const expiresAt = new Date();
-                    expiresAt.setHours(expiresAt.getHours() + 24); // 24 hour session
-
-                    // Generate a simple session token
-                    const sessionToken = await simpleHash(user.ItemId + Date.now());
+                if (response.ok && result.access_token) {
+                    // Login successful — got JWT tokens
+                    const userInfo = await fetchUserInfo(result.access_token);
+                    const jwtPayload = parseJwt(result.access_token);
 
                     authState = {
                         isLoggedIn: true,
-                        user: { 
-                            email: user.Email, 
-                            id: user.ItemId,
-                            username: user.Username 
+                        user: userInfo || {
+                            email: jwtPayload?.email || email,
+                            userName: jwtPayload?.preferred_username || jwtPayload?.name || email.split('@')[0],
+                            sub: jwtPayload?.sub
                         },
-                        token: sessionToken
+                        accessToken: result.access_token,
+                        refreshToken: result.refresh_token
                     };
 
                     // Save to localStorage
                     localStorage.setItem('pooppatrol_auth', JSON.stringify({
                         user: authState.user,
-                        token: authState.token,
-                        expiresAt: expiresAt.toISOString()
+                        accessToken: authState.accessToken,
+                        refreshToken: authState.refreshToken
                     }));
 
-                    // Also use username as player name if not set
+                    // Use username as player name if not set
                     if (!playerName) {
-                        playerName = user.Username || email.split('@')[0];
+                        playerName = authState.user.userName || authState.user.email?.split('@')[0] || 'Pilot';
                         localStorage.setItem('pooppatrol_player_name', playerName);
                     }
 
@@ -1409,8 +1475,9 @@
                     closeAuthModal();
                     showNotification('Login successful!', 'stock');
                 } else {
-                    // Login failed
-                    errorEl.textContent = 'Invalid email or password';
+                    // Login failed — parse error
+                    const errorMsg = result.error_description || result.error || result.message || 'Invalid email or password';
+                    errorEl.textContent = errorMsg;
                 }
             } catch (error) {
                 console.error('Login error:', error);
@@ -1421,16 +1488,7 @@
             }
         }
 
-        // Simple hash function for dev environment (NOT for production!)
-        async function simpleHash(str) {
-            const encoder = new TextEncoder();
-            const data = encoder.encode(str + AUTH_API.key); // Salt with API key
-            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-        }
-
-        // Handle registration using GraphQL data gateway (dev environment)
+        // Handle registration via Blocks IDP IAM Create endpoint
         async function handleRegister(event) {
             event.preventDefault();
             const email = document.getElementById('register-email').value.trim().toLowerCase();
@@ -1464,71 +1522,46 @@
             submitBtn.textContent = 'Creating account...';
 
             try {
-                // Check if user already exists
-                const checkQuery = `
-                    query {
-                        getHonkGameUsers(
-                            input: {
-                                filter: "{\\"Email\\": \\"${email}\\"}",
-                                pageNo: 1,
-                                pageSize: 1
-                            }
-                        ) {
-                            totalCount
+                // Check if email is available via IDP
+                const checkResponse = await fetch(
+                    `${IDP_API.baseUrl}/Iam/IsEmailAvaiable?Email=${encodeURIComponent(email)}&ProjectKey=${IDP_API.key}`,
+                    {
+                        method: 'GET',
+                        headers: {
+                            'x-blocks-key': IDP_API.key
                         }
                     }
-                `;
+                );
 
-                const checkResponse = await fetch(BLOCKS_API.endpoint, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'x-blocks-key': BLOCKS_API.key
-                    },
-                    body: JSON.stringify({ query: checkQuery })
-                });
-
-                const checkResult = await checkResponse.json();
-                
-                if (checkResult.data?.getHonkGameUsers?.totalCount > 0) {
-                    errorEl.textContent = 'An account with this email already exists';
-                    return;
+                if (checkResponse.ok) {
+                    const isAvailable = await checkResponse.json();
+                    // If the endpoint returns false or a body indicating taken
+                    if (isAvailable === false || isAvailable?.isAvailable === false) {
+                        errorEl.textContent = 'An account with this email already exists';
+                        return;
+                    }
                 }
 
-                // Hash the password
-                const passwordHash = await simpleHash(password);
-
-                // Create new user
-                const mutation = `
-                    mutation($input: HonkGameUserInsertInput!) {
-                        insertHonkGameUser(input: $input) {
-                            itemId
-                            acknowledged
-                        }
-                    }
-                `;
-
-                const variables = {
-                    input: {
-                        Email: email,
-                        PasswordHash: passwordHash,
-                        Username: email.split('@')[0],
-                        CreatedAt: new Date().toISOString()
-                    }
-                };
-
-                const response = await fetch(BLOCKS_API.endpoint, {
+                // Create user via IDP IAM
+                const response = await fetch(`${IDP_API.baseUrl}/Iam/Create`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'x-blocks-key': BLOCKS_API.key
+                        'x-blocks-key': IDP_API.key
                     },
-                    body: JSON.stringify({ query: mutation, variables })
+                    body: JSON.stringify({
+                        email: email,
+                        userName: email.split('@')[0],
+                        password: password,
+                        firstName: email.split('@')[0],
+                        lastName: '',
+                        language: 'en'
+                    })
                 });
 
                 const result = await response.json();
 
-                if (result.data?.insertHonkGameUser?.acknowledged) {
+                if (response.ok && !result.errors) {
                     // Registration successful
                     successEl.textContent = 'Account created! You can now login.';
                     document.getElementById('register-form').reset();
@@ -1538,11 +1571,15 @@
                         switchAuthTab('login');
                         document.getElementById('login-email').value = email;
                     }, 2000);
-                } else if (result.errors) {
-                    console.error('GraphQL errors:', result.errors);
-                    errorEl.textContent = 'Registration failed. Please try again.';
                 } else {
-                    errorEl.textContent = 'Registration failed. Please try again.';
+                    // Parse IDP error response
+                    const errors = result.errors;
+                    if (errors && typeof errors === 'object') {
+                        const firstError = Object.values(errors)[0];
+                        errorEl.textContent = firstError || 'Registration failed. Please try again.';
+                    } else {
+                        errorEl.textContent = result.message || 'Registration failed. Please try again.';
+                    }
                 }
             } catch (error) {
                 console.error('Registration error:', error);
@@ -1553,12 +1590,32 @@
             }
         }
 
-        // Handle logout
-        function handleLogout() {
+        // Handle logout via Blocks IDP
+        async function handleLogout() {
+            // Invalidate refresh token on server
+            if (authState.refreshToken) {
+                try {
+                    await fetch(`${IDP_API.baseUrl}/Authentication/Logout`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${authState.accessToken}`,
+                            'x-blocks-key': IDP_API.key
+                        },
+                        body: JSON.stringify({
+                            refreshToken: authState.refreshToken
+                        })
+                    });
+                } catch (e) {
+                    console.warn('Server logout failed (continuing local logout):', e);
+                }
+            }
+
             authState = {
                 isLoggedIn: false,
                 user: null,
-                token: null
+                accessToken: null,
+                refreshToken: null
             };
             localStorage.removeItem('pooppatrol_auth');
             updateAuthUI();
