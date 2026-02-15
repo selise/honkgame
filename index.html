@@ -846,10 +846,10 @@
     <div id="title-screen" class="screen">
         <h1>POOP PATROL</h1>
         <div class="subtitle">Horizontal Poopage</div>
-        
+
         <!-- User Status Badge -->
         <div id="user-status" style="margin-top: -20px; margin-bottom: 15px;"></div>
-        
+
         <div id="settings-status"
             style="margin-top: -10px; margin-bottom: 20px; font-size: 0.8rem; color: #fff; background: rgba(0,0,0,0.4); padding: 5px 15px; border-radius: 20px;">
             Checking settings...</div>
@@ -871,8 +871,9 @@
         <div class="auth-container" style="position: relative;">
             <button class="auth-close" onclick="closeAuthModal()">&times;</button>
             <h2 style="margin: 0 0 10px 0; color: var(--primary); text-align: center;">Welcome Pilot!</h2>
-            <p style="text-align: center; color: #888; margin-bottom: 25px; font-size: 0.9rem;">Login to access advanced settings</p>
-            
+            <p style="text-align: center; color: #888; margin-bottom: 25px; font-size: 0.9rem;">Login to access advanced
+                settings</p>
+
             <div class="auth-tabs">
                 <button id="tab-login" class="auth-tab active" onclick="switchAuthTab('login')">Login</button>
                 <button id="tab-register" class="auth-tab" onclick="switchAuthTab('register')">Register</button>
@@ -900,12 +901,14 @@
                 </div>
                 <div class="auth-input-group">
                     <label for="register-password">Password</label>
-                    <input type="password" id="register-password" class="auth-input" placeholder="Create password" required minlength="8">
+                    <input type="password" id="register-password" class="auth-input" placeholder="Create password"
+                        required minlength="8">
                     <div class="password-requirements">Min 8 characters, include uppercase, lowercase, number</div>
                 </div>
                 <div class="auth-input-group">
                     <label for="register-confirm">Confirm Password</label>
-                    <input type="password" id="register-confirm" class="auth-input" placeholder="Confirm password" required>
+                    <input type="password" id="register-confirm" class="auth-input" placeholder="Confirm password"
+                        required>
                 </div>
                 <div id="register-error" class="auth-error"></div>
                 <div id="register-success" class="auth-success"></div>
@@ -1488,7 +1491,17 @@
             }
         }
 
-        // Handle registration via Blocks IDP IAM Create endpoint
+        // Hash function for user registration (data gateway stores hashed passwords)
+        async function simpleHash(str) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(str + BLOCKS_API.key);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        // Handle registration via data gateway (IDP Iam/Create requires admin auth)
+        // Users are created in HonkGameUser schema, then login via IDP Token endpoint
         async function handleRegister(event) {
             event.preventDefault();
             const email = document.getElementById('register-email').value.trim().toLowerCase();
@@ -1522,64 +1535,85 @@
             submitBtn.textContent = 'Creating account...';
 
             try {
-                // Check if email is available via IDP
-                const checkResponse = await fetch(
-                    `${IDP_API.baseUrl}/Iam/IsEmailAvaiable?Email=${encodeURIComponent(email)}&ProjectKey=${IDP_API.key}`,
-                    {
-                        method: 'GET',
-                        headers: {
-                            'x-blocks-key': IDP_API.key
+                // Check if user already exists
+                const checkQuery = `
+                    query {
+                        getHonkGameUsers(
+                            input: {
+                                filter: "{\\\"Email\\\": \\\"${email}\\\"}",
+                                pageNo: 1,
+                                pageSize: 1
+                            }
+                        ) {
+                            totalCount
                         }
                     }
-                );
+                `;
 
-                if (checkResponse.ok) {
-                    const isAvailable = await checkResponse.json();
-                    // If the endpoint returns false or a body indicating taken
-                    if (isAvailable === false || isAvailable?.isAvailable === false) {
-                        errorEl.textContent = 'An account with this email already exists';
-                        return;
-                    }
-                }
-
-                // Create user via IDP IAM
-                const response = await fetch(`${IDP_API.baseUrl}/Iam/Create`, {
+                const checkResponse = await fetch(BLOCKS_API.endpoint, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'x-blocks-key': IDP_API.key
+                        'x-blocks-key': BLOCKS_API.key
                     },
-                    body: JSON.stringify({
-                        email: email,
-                        userName: email.split('@')[0],
-                        password: password,
-                        firstName: email.split('@')[0],
-                        lastName: '',
-                        language: 'en'
-                    })
+                    body: JSON.stringify({ query: checkQuery })
+                });
+
+                const checkResult = await checkResponse.json();
+
+                if (checkResult.data?.getHonkGameUsers?.totalCount > 0) {
+                    errorEl.textContent = 'An account with this email already exists';
+                    return;
+                }
+
+                // Hash the password
+                const passwordHash = await simpleHash(password);
+
+                // Create new user in data gateway
+                const mutation = `
+                    mutation($input: HonkGameUserInsertInput!) {
+                        insertHonkGameUser(input: $input) {
+                            itemId
+                            acknowledged
+                        }
+                    }
+                `;
+
+                const variables = {
+                    input: {
+                        Email: email,
+                        PasswordHash: passwordHash,
+                        Username: email.split('@')[0],
+                        CreatedAt: new Date().toISOString()
+                    }
+                };
+
+                const response = await fetch(BLOCKS_API.endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-blocks-key': BLOCKS_API.key
+                    },
+                    body: JSON.stringify({ query: mutation, variables })
                 });
 
                 const result = await response.json();
 
-                if (response.ok && !result.errors) {
+                if (result.data?.insertHonkGameUser?.acknowledged) {
                     // Registration successful
                     successEl.textContent = 'Account created! You can now login.';
                     document.getElementById('register-form').reset();
-                    
+
                     // Auto-switch to login after 2 seconds
                     setTimeout(() => {
                         switchAuthTab('login');
                         document.getElementById('login-email').value = email;
                     }, 2000);
+                } else if (result.errors) {
+                    console.error('GraphQL errors:', result.errors);
+                    errorEl.textContent = 'Registration failed. Please try again.';
                 } else {
-                    // Parse IDP error response
-                    const errors = result.errors;
-                    if (errors && typeof errors === 'object') {
-                        const firstError = Object.values(errors)[0];
-                        errorEl.textContent = firstError || 'Registration failed. Please try again.';
-                    } else {
-                        errorEl.textContent = result.message || 'Registration failed. Please try again.';
-                    }
+                    errorEl.textContent = 'Registration failed. Please try again.';
                 }
             } catch (error) {
                 console.error('Registration error:', error);
