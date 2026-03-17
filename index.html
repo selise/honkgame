@@ -808,6 +808,55 @@
             color: #666;
             margin-top: -10px;
         }
+
+        /* Activation overlay (Blocks invite) */
+        .activation-screen {
+            position: fixed;
+            inset: 0;
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.65);
+            backdrop-filter: blur(10px);
+        }
+
+        .activation-card {
+            width: min(520px, 100%);
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 18px;
+            padding: 22px 22px 18px;
+            box-shadow: 0 18px 60px rgba(0, 0, 0, 0.55);
+        }
+
+        .activation-title {
+            margin: 0 0 6px 0;
+            text-align: center;
+            color: var(--primary);
+            font-weight: 900;
+            letter-spacing: 0.5px;
+        }
+
+        .activation-subtitle {
+            margin: 0 0 18px 0;
+            text-align: center;
+            color: #aaa;
+            font-size: 0.9rem;
+            line-height: 1.35;
+        }
+
+        .activation-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: space-between;
+            margin-top: 12px;
+        }
+
+        .activation-actions .btn {
+            flex: 1;
+        }
     </style>
 </head>
 
@@ -913,6 +962,38 @@
                 <div id="register-error" class="auth-error"></div>
                 <div id="register-success" class="auth-success"></div>
                 <button type="submit" id="register-submit" class="auth-btn">Create Account</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Blocks Invite Activation Screen -->
+    <div id="activation-screen" class="activation-screen">
+        <div class="activation-card">
+            <h2 class="activation-title">Activate your account</h2>
+            <p class="activation-subtitle">
+                You’ve been invited. Set a password to activate your account, then sign in.
+            </p>
+
+            <form id="activation-form" class="auth-form" onsubmit="handleActivation(event)" style="display: block;">
+                <div class="auth-input-group">
+                    <label for="activation-password">New password</label>
+                    <input type="password" id="activation-password" class="auth-input"
+                        placeholder="Create a password" required minlength="8" autocomplete="new-password">
+                    <div class="password-requirements">Min 8 characters, include uppercase, lowercase, number</div>
+                </div>
+                <div class="auth-input-group">
+                    <label for="activation-confirm">Confirm password</label>
+                    <input type="password" id="activation-confirm" class="auth-input"
+                        placeholder="Confirm password" required autocomplete="new-password">
+                </div>
+
+                <div id="activation-error" class="auth-error"></div>
+                <div id="activation-success" class="auth-success"></div>
+
+                <div class="activation-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeActivation()">Cancel</button>
+                    <button type="submit" id="activation-submit" class="btn">Activate</button>
+                </div>
             </form>
         </div>
     </div>
@@ -1231,6 +1312,43 @@
             refreshToken: null
         };
 
+        // Invite activation state (Blocks Identity)
+        let activationCode = null;
+
+        function parseActivationCodeFromUrl() {
+            const params = new URLSearchParams(window.location.search);
+            const code = params.get('code');
+            if (code && typeof code === 'string' && code.trim().length > 0) return code.trim();
+            return null;
+        }
+
+        function checkForActivation() {
+            const code = parseActivationCodeFromUrl();
+            if (!code) return false;
+            activationCode = code;
+            openActivation();
+            return true;
+        }
+
+        function openActivation() {
+            const el = document.getElementById('activation-screen');
+            if (!el) return;
+            el.style.display = 'flex';
+            document.getElementById('activation-form')?.reset?.();
+            document.getElementById('activation-error').textContent = '';
+            document.getElementById('activation-success').textContent = '';
+            setTimeout(() => document.getElementById('activation-password')?.focus?.(), 0);
+        }
+
+        function closeActivation() {
+            const el = document.getElementById('activation-screen');
+            if (!el) return;
+            el.style.display = 'none';
+            activationCode = null;
+            // If user cancels, return them to normal entry (title screen)
+            history.replaceState({}, document.title, '/');
+        }
+
         // Parse JWT payload without library
         function parseJwt(token) {
             try {
@@ -1488,6 +1606,82 @@
             } finally {
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Login';
+            }
+        }
+
+        // Activate invited user via Blocks Identity
+        async function handleActivation(event) {
+            event.preventDefault();
+
+            const errorEl = document.getElementById('activation-error');
+            const successEl = document.getElementById('activation-success');
+            const submitBtn = document.getElementById('activation-submit');
+            const password = document.getElementById('activation-password').value;
+            const confirm = document.getElementById('activation-confirm').value;
+
+            errorEl.textContent = '';
+            successEl.textContent = '';
+
+            if (!activationCode) {
+                errorEl.textContent = 'Activation code missing. Please open the invite link again.';
+                return;
+            }
+
+            if (password !== confirm) {
+                errorEl.textContent = 'Passwords do not match';
+                return;
+            }
+
+            if (password.length < 8) {
+                errorEl.textContent = 'Password must be at least 8 characters';
+                return;
+            }
+
+            if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password)) {
+                errorEl.textContent = 'Password must include uppercase, lowercase, and number';
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Activating...';
+
+            try {
+                const response = await fetch(`${IDP_API.baseUrl}/Iam/Activate`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-blocks-key': IDP_API.key
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        code: activationCode,
+                        password: password,
+                        captchaCode: '',
+                        projectKey: IDP_API.key,
+                        preventPostEvent: true
+                    })
+                });
+
+                const result = await response.json().catch(() => ({}));
+                if (response.ok) {
+                    successEl.textContent = 'Activated! You can now login.';
+                    showNotification('Account activated. Please login.', 'stock');
+
+                    // Remove activation params and route back to root
+                    history.replaceState({}, document.title, '/');
+                    closeActivation();
+                    openAuthModal();
+                    switchAuthTab('login');
+                } else {
+                    const msg = result?.message || result?.error || 'Activation failed. Please try again.';
+                    errorEl.textContent = msg;
+                }
+            } catch (e) {
+                console.error('Activation error:', e);
+                errorEl.textContent = 'Connection error. Please try again.';
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Activate';
             }
         }
 
@@ -1862,6 +2056,9 @@
             initAuthState(); // Initialize auth from localStorage
             resize();
             draw();
+
+            // Blocks invite activation takes priority over normal entry
+            checkForActivation();
         }
         init();
 
