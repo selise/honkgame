@@ -14,7 +14,7 @@
         "laneHeight": 50,
         "roadY": 0.75,
         "baseSpeedMin": 1,
-        "baseSpeedMax": 10,
+        "baseSpeedMax": 2,
         "spawnTimerInitial": 2000,
         "spawnTimerMin": 600,
         "difficultySpawnReduction": 150,
@@ -23,7 +23,7 @@
         "difficultyInterval": 15
     },
     "audio": {
-        "honkVolume": 0.04,
+        "honkVolume": 0.1,
         "honkChanceNormal": 0.002,
         "honkChanceJam": 0.02
     },
