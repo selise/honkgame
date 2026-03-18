@@ -944,24 +944,14 @@
 
             <!-- Register Form -->
             <form id="register-form" class="auth-form hidden" onsubmit="handleRegister(event)">
+                <p style="text-align: center; color: #888; margin-bottom: 20px; font-size: 0.85rem;">Enter your email and we'll send you an invitation link to activate your account.</p>
                 <div class="auth-input-group">
                     <label for="register-email">Email</label>
                     <input type="email" id="register-email" class="auth-input" placeholder="your@email.com" required>
                 </div>
-                <div class="auth-input-group">
-                    <label for="register-password">Password</label>
-                    <input type="password" id="register-password" class="auth-input" placeholder="Create password"
-                        required minlength="8">
-                    <div class="password-requirements">Min 8 characters, include uppercase, lowercase, number</div>
-                </div>
-                <div class="auth-input-group">
-                    <label for="register-confirm">Confirm Password</label>
-                    <input type="password" id="register-confirm" class="auth-input" placeholder="Confirm password"
-                        required>
-                </div>
                 <div id="register-error" class="auth-error"></div>
                 <div id="register-success" class="auth-success"></div>
-                <button type="submit" id="register-submit" class="auth-btn">Create Account</button>
+                <button type="submit" id="register-submit" class="auth-btn">Send Invitation</button>
             </form>
         </div>
     </div>
@@ -1301,6 +1291,13 @@
         // Docs: https://api.seliseblocks.com/idp/v1/swagger/index.html
         const IDP_API = {
             baseUrl: 'https://api.seliseblocks.com/idp/v1',
+            key: '0E123141586144C6976FF44228A71D20'
+        };
+
+        // Blocks Identifier API Configuration
+        // Docs: https://api.seliseblocks.com/identifier/v1/swagger/index.html
+        const IDENTIFIER_API = {
+            baseUrl: 'https://api.seliseblocks.com/identifier/v1',
             key: '0E123141586144C6976FF44228A71D20'
         };
 
@@ -1694,13 +1691,10 @@
             return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
         }
 
-        // Handle registration via data gateway (IDP Iam/Create requires admin auth)
-        // Users are created in HonkGameUser schema, then login via IDP Token endpoint
+        // Handle signup via Blocks Identifier API - sends an invitation link to the user's email
         async function handleRegister(event) {
             event.preventDefault();
             const email = document.getElementById('register-email').value.trim().toLowerCase();
-            const password = document.getElementById('register-password').value;
-            const confirm = document.getElementById('register-confirm').value;
             const errorEl = document.getElementById('register-error');
             const successEl = document.getElementById('register-success');
             const submitBtn = document.getElementById('register-submit');
@@ -1708,113 +1702,36 @@
             errorEl.textContent = '';
             successEl.textContent = '';
 
-            // Validate password match
-            if (password !== confirm) {
-                errorEl.textContent = 'Passwords do not match';
-                return;
-            }
-
-            // Validate password strength
-            if (password.length < 8) {
-                errorEl.textContent = 'Password must be at least 8 characters';
-                return;
-            }
-
-            if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password)) {
-                errorEl.textContent = 'Password must include uppercase, lowercase, and number';
-                return;
-            }
-
             submitBtn.disabled = true;
-            submitBtn.textContent = 'Creating account...';
+            submitBtn.textContent = 'Sending...';
 
             try {
-                // Check if user already exists
-                const checkQuery = `
-                    query {
-                        getHonkGameUsers(
-                            input: {
-                                filter: "{\\\"Email\\\": \\\"${email}\\\"}",
-                                pageNo: 1,
-                                pageSize: 1
-                            }
-                        ) {
-                            totalCount
-                        }
-                    }
-                `;
-
-                const checkResponse = await fetch(BLOCKS_API.endpoint, {
+                const response = await fetch(`${IDENTIFIER_API.baseUrl}/People/Signup`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'x-blocks-key': BLOCKS_API.key
+                        'x-blocks-key': IDENTIFIER_API.key
                     },
-                    body: JSON.stringify({ query: checkQuery })
+                    body: JSON.stringify({
+                        email: email,
+                        captchaCode: ''
+                    })
                 });
 
-                const checkResult = await checkResponse.json();
-
-                if (checkResult.data?.getHonkGameUsers?.totalCount > 0) {
-                    errorEl.textContent = 'An account with this email already exists';
-                    return;
-                }
-
-                // Hash the password
-                const passwordHash = await simpleHash(password);
-
-                // Create new user in data gateway
-                const mutation = `
-                    mutation($input: HonkGameUserInsertInput!) {
-                        insertHonkGameUser(input: $input) {
-                            itemId
-                            acknowledged
-                        }
-                    }
-                `;
-
-                const variables = {
-                    input: {
-                        Email: email,
-                        PasswordHash: passwordHash,
-                        Username: email.split('@')[0],
-                        CreatedAt: new Date().toISOString()
-                    }
-                };
-
-                const response = await fetch(BLOCKS_API.endpoint, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'x-blocks-key': BLOCKS_API.key
-                    },
-                    body: JSON.stringify({ query: mutation, variables })
-                });
-
-                const result = await response.json();
-
-                if (result.data?.insertHonkGameUser?.acknowledged) {
-                    // Registration successful
-                    successEl.textContent = 'Account created! You can now login.';
+                if (response.ok) {
+                    successEl.textContent = 'Invitation sent! Check your email to activate your account.';
                     document.getElementById('register-form').reset();
-
-                    // Auto-switch to login after 2 seconds
-                    setTimeout(() => {
-                        switchAuthTab('login');
-                        document.getElementById('login-email').value = email;
-                    }, 2000);
-                } else if (result.errors) {
-                    console.error('GraphQL errors:', result.errors);
-                    errorEl.textContent = 'Registration failed. Please try again.';
                 } else {
-                    errorEl.textContent = 'Registration failed. Please try again.';
+                    const result = await response.json().catch(() => null);
+                    const message = result?.message || result?.title || 'Signup failed. Please try again.';
+                    errorEl.textContent = message;
                 }
             } catch (error) {
-                console.error('Registration error:', error);
+                console.error('Signup error:', error);
                 errorEl.textContent = 'Connection error. Please try again.';
             } finally {
                 submitBtn.disabled = false;
-                submitBtn.textContent = 'Create Account';
+                submitBtn.textContent = 'Send Invitation';
             }
         }
 
