@@ -1294,10 +1294,10 @@
             key: '0E123141586144C6976FF44228A71D20'
         };
 
-        // Blocks Identifier API Configuration
+        // Blocks Identifier API Configuration (project-specific subdomain)
         // Docs: https://api.seliseblocks.com/identifier/v1/swagger/index.html
         const IDENTIFIER_API = {
-            baseUrl: 'https://api.seliseblocks.com/identifier/v1',
+            baseUrl: 'https://dsjogn-dqnxc.seliseblocks.com/identifier/v1',
             key: '0E123141586144C6976FF44228A71D20'
         };
 
@@ -1706,11 +1706,11 @@
             submitBtn.textContent = 'Sending...';
 
             try {
-                const response = await fetch(`${IDP_API.baseUrl}/People/Signup`, {
+                const response = await fetch(`${IDENTIFIER_API.baseUrl}/People/Signup`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'x-blocks-key': IDP_API.key
+                        'x-blocks-key': IDENTIFIER_API.key
                     },
                     credentials: 'include',
                     body: JSON.stringify({
