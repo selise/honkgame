@@ -1710,12 +1710,11 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Accept': 'application/json',
                         'x-blocks-key': IDENTIFIER_API.key
                     },
                     body: JSON.stringify({
                         email: email,
-                        captchaCode: ''
+                        captchaCode: null
                     })
                 });
 
@@ -1723,8 +1722,10 @@
                     successEl.textContent = 'Invitation sent! Check your email to activate your account.';
                     document.getElementById('register-form').reset();
                 } else {
-                    const result = await response.json().catch(() => null);
-                    const message = result?.message || result?.title || 'Signup failed. Please try again.';
+                    const text = await response.text().catch(() => '');
+                    console.error('Signup failed:', response.status, text);
+                    let message = 'Signup failed. Please try again.';
+                    try { const j = JSON.parse(text); message = j.message || j.title || message; } catch {}
                     errorEl.textContent = message;
                 }
             } catch (error) {
