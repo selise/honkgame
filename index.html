@@ -1706,12 +1706,13 @@
             submitBtn.textContent = 'Sending...';
 
             try {
-                const response = await fetch(`${IDENTIFIER_API.baseUrl}/People/Signup`, {
+                const response = await fetch(`${IDP_API.baseUrl}/People/Signup`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'x-blocks-key': IDENTIFIER_API.key
+                        'x-blocks-key': IDP_API.key
                     },
+                    credentials: 'include',
                     body: JSON.stringify({
                         email: email,
                         captchaCode: null
