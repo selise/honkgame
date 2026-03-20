@@ -1840,18 +1840,21 @@
                     'Authorization': `Bearer ${accessToken}`,
                     'x-blocks-key': IDP_API.key
                 };
-                const [infoResp, accountResp] = await Promise.all([
+                const jwtPayload = parseJwt(accessToken);
+                const userId = jwtPayload?.user_id || jwtPayload?.sub?.replace('blocks|', '');
+                const rolesUrl = `${IDP_API.baseUrl}/Iam/GetUserRoles?Id=${userId}&ProjectKey=${IDP_API.key}`;
+                const [infoResp, rolesResp] = await Promise.all([
                     fetch(`${IDP_API.baseUrl}/Authentication/GetUserInfo`, { method: 'GET', headers }),
-                    fetch(`${IDP_API.baseUrl}/Iam/GetAccount`, { method: 'GET', headers })
+                    fetch(rolesUrl, { method: 'GET', headers })
                 ]);
                 const userInfo = infoResp.ok ? await infoResp.json() : null;
-                const accountData = accountResp.ok ? await accountResp.json() : null;
-                // Flatten roles from all org memberships
-                const memberships = accountData?.data?.memberships || [];
-                const roles = memberships.flatMap(m => m.roles || []).join(',');
-                console.log('[fetchUserInfo] memberships:', JSON.stringify(memberships));
+                const rolesData = rolesResp.ok ? await rolesResp.json() : null;
+                const roles = Array.isArray(rolesData?.data)
+                    ? rolesData.data.map(r => r.slug || r.name).join(',')
+                    : '';
+                console.log('[fetchUserInfo] GetUserRoles status:', rolesResp.status, 'data:', JSON.stringify(rolesData));
                 console.log('[fetchUserInfo] roles:', roles);
-                if (!userInfo && !accountData) return null;
+                if (!userInfo && !rolesData) return null;
                 return { ...(userInfo || {}), roles };
             } catch (e) {
                 console.warn('Failed to fetch user info:', e);
