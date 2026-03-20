@@ -2339,7 +2339,8 @@
                     TimeSurvived: Math.floor(timeSeconds),
                     CarsSilenced: carsSilenced,
                     PoopsDropped: poopsDropped,
-                    Level: difficulty
+                    Level: difficulty,
+                    ...(authState.isLoggedIn && authState.user?.sub ? { UserId: authState.user.sub } : {})
                 }
             };
 
