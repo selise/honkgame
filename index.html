@@ -1758,7 +1758,7 @@
                 } else {
                     const d = await gatewayRequest(
                         `mutation($input: HonkGameLevelInsertInput!) { insertHonkGameLevel(input: $input) { itemId } }`,
-                        { input: { LevelName: levelName, LevelNumber: levelNumber, Description: description, UnlockScore: unlockScore, Emoji: emoji, Color: color, IsActive: true, SettingsJson: JSON.stringify(settings), ...(authState.user?.sub ? { UserId: authState.user.sub } : {}) } }
+                        { input: { LevelName: levelName, LevelNumber: levelNumber, Description: description, UnlockScore: unlockScore, Emoji: emoji, Color: color, IsActive: true, SettingsJson: JSON.stringify(settings) } }
                     );
                     const newL = { ItemId: d.insertHonkGameLevel.itemId, LevelName: levelName, LevelNumber: levelNumber, Description: description, UnlockScore: unlockScore, Emoji: emoji, Color: color, IsActive: true, SettingsJson: JSON.stringify(settings) };
                     gameLevels.push(newL);
