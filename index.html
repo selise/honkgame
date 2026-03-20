@@ -2039,6 +2039,7 @@
                     // Login successful — got JWT tokens
                     const userInfo = await fetchUserInfo(result.access_token);
                     const jwtPayload = parseJwt(result.access_token);
+                    console.log('[login] full JWT payload:', JSON.stringify(jwtPayload));
 
                     authState = {
                         isLoggedIn: true,
