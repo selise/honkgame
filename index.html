@@ -1852,6 +1852,7 @@
                 const roles = Array.isArray(rolesData?.data)
                     ? rolesData.data.map(r => r.slug || r.name).join(',')
                     : '';
+                console.log('[fetchUserInfo] GetUserInfo response:', JSON.stringify(userInfo));
                 console.log('[fetchUserInfo] GetUserRoles status:', rolesResp.status, 'data:', JSON.stringify(rolesData));
                 console.log('[fetchUserInfo] roles:', roles);
                 if (!userInfo && !rolesData) return null;
