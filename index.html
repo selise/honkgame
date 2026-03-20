@@ -1718,6 +1718,7 @@
                         'Content-Type': 'application/json',
                         'x-blocks-key': IDP_API.key
                     },
+                    credentials: 'include',
                     body: JSON.stringify({ configurationName: CAPTCHA_CONFIG_NAME })
                 });
 
