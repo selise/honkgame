@@ -1025,6 +1025,24 @@
             <div style="font-size: 0.8rem; opacity: 0.6;">Apply changes before starting flight</div>
         </div>
         <div class="modal-body" id="settings-editor-fields">
+            <!-- Group Presets -->
+            <div class="setting-group" style="grid-column: span 2;">
+                <div class="setting-group-title">Game Modes</div>
+                <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                    <select id="preset-select" onchange="document.getElementById('preset-delete-btn').style.display=this.value?'':'none'"
+                        style="flex:1; min-width:150px; background:rgba(0,0,0,0.3); color:white; border:1px solid rgba(255,255,255,0.1); padding:8px 12px; border-radius:8px; font-family:inherit; font-size:0.9rem;">
+                        <option value="">— select a mode —</option>
+                    </select>
+                    <button class="btn btn-small" onclick="loadSelectedPreset()">Apply</button>
+                    <button class="btn btn-small btn-secondary" id="preset-delete-btn" onclick="deleteSelectedPreset()" style="display:none;">Delete</button>
+                </div>
+                <div style="display:flex; gap:10px; align-items:center; margin-top:12px; flex-wrap:wrap;">
+                    <input type="text" id="preset-name-input" placeholder="new mode name (e.g. easy, hard, cloudy)…"
+                        style="flex:1; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); color:white; padding:8px 12px; border-radius:8px; font-family:inherit; font-size:0.9rem;">
+                    <button class="btn btn-small" onclick="saveCurrentAsPreset()">Save as Mode</button>
+                </div>
+                <div id="preset-status" style="font-size:0.75rem; color:#888; margin-top:8px; min-height:18px;"></div>
+            </div>
             <!-- Group Bird -->
             <div class="setting-group">
                 <div class="setting-group-title">Bird</div>
@@ -1128,6 +1146,7 @@
             </div>
         </div>
         <div class="modal-footer">
+            <span id="modal-active-mode" style="font-size:0.8rem; color:#4CAF50; flex:1;"></span>
             <button class="btn btn-small btn-secondary" onclick="closeSettings()">Cancel</button>
             <button class="btn btn-small" onclick="saveSettings()">Save Changes</button>
         </div>
@@ -1242,6 +1261,190 @@
             }
         }
 
+        // ── Game Mode / Preset State ──────────────────────────────────────────
+        let presets = [];
+        let activePresetId   = localStorage.getItem('honk_preset_id')   || null;
+        let activePresetName = localStorage.getItem('honk_preset_name') || null;
+
+        async function loadPresets() {
+            try {
+                const data = await gatewayRequest(`
+                    query {
+                        getHonkGamePresets(input: { pageNo: 1, pageSize: 100 }) {
+                            items { ItemId PresetName SettingsJson }
+                        }
+                    }
+                `);
+                presets = data.getHonkGamePresets?.items || [];
+                if (activePresetId) {
+                    const p = presets.find(p => p.ItemId === activePresetId);
+                    if (p) applyPreset(p, false);
+                }
+                updateSettingsStatusBadge();
+            } catch(e) { console.warn('Presets unavailable:', e); }
+        }
+
+        function applyPreset(preset, reinit = true) {
+            try {
+                const loaded = JSON.parse(preset.SettingsJson);
+                for (const k in loaded) {
+                    if (settings[k] && typeof settings[k] === 'object' && !Array.isArray(settings[k])) {
+                        settings[k] = { ...settings[k], ...loaded[k] };
+                    } else { settings[k] = loaded[k]; }
+                }
+                activePresetId   = preset.ItemId;
+                activePresetName = preset.PresetName;
+                localStorage.setItem('honk_preset_id',   activePresetId);
+                localStorage.setItem('honk_preset_name', activePresetName);
+                syncSettingsToUI();
+                if (reinit) { clouds = []; trees = []; silhouettes = []; resize(); draw(); }
+                updateSettingsStatusBadge();
+            } catch(e) { console.warn('Failed to apply preset:', e); }
+        }
+
+        function readSettingsFromUI() {
+            settings.bird.speed = parseFloat(document.getElementById('set-bird-speed').value) || settings.bird.speed;
+            settings.bird.margin = parseFloat(document.getElementById('set-bird-margin').value) || settings.bird.margin;
+            settings.traffic.lanes = parseInt(document.getElementById('set-traffic-lanes').value) || settings.traffic.lanes;
+            settings.traffic.laneHeight = parseFloat(document.getElementById('set-traffic-laneHeight').value) || settings.traffic.laneHeight;
+            settings.traffic.baseSpeedMin = parseFloat(document.getElementById('set-traffic-baseSpeedMin').value) || settings.traffic.baseSpeedMin;
+            settings.traffic.baseSpeedMax = parseFloat(document.getElementById('set-traffic-baseSpeedMax').value) || settings.traffic.baseSpeedMax;
+            settings.traffic.spawnTimerInitial = parseFloat(document.getElementById('set-traffic-spawnTimerInitial').value) || settings.traffic.spawnTimerInitial;
+            settings.traffic.spawnTimerMin = parseFloat(document.getElementById('set-traffic-spawnTimerMin').value) || settings.traffic.spawnTimerMin;
+            settings.traffic.difficultyInterval = parseFloat(document.getElementById('set-traffic-difficultyInterval').value) || settings.traffic.difficultyInterval;
+            settings.traffic.difficultySpawnReduction = parseFloat(document.getElementById('set-traffic-difficultySpawnReduction').value) || settings.traffic.difficultySpawnReduction;
+            settings.physics.poopGravity = parseFloat(document.getElementById('set-physics-poopGravity').value) || settings.physics.poopGravity;
+            settings.physics.poopInitialVy = parseFloat(document.getElementById('set-physics-poopInitialVy').value) || settings.physics.poopInitialVy;
+            settings.gameplay.noiseMax = parseFloat(document.getElementById('set-gameplay-noiseMax').value) || settings.gameplay.noiseMax;
+            settings.gameplay.noiseDecay = parseFloat(document.getElementById('set-gameplay-noiseDecay').value) || settings.gameplay.noiseDecay;
+            settings.gameplay.noiseIncrease = parseFloat(document.getElementById('set-gameplay-noiseIncrease').value) || settings.gameplay.noiseIncrease;
+            settings.environment.treeCount = parseInt(document.getElementById('set-environment-treeCount').value) || settings.environment.treeCount;
+            settings.environment.shopCount = parseInt(document.getElementById('set-environment-shopCount').value) || settings.environment.shopCount;
+            settings.environment.commercialCount = parseInt(document.getElementById('set-environment-commercialCount').value) || settings.environment.commercialCount;
+            settings.environment.silhouetteCount = parseInt(document.getElementById('set-environment-silhouetteCount').value) || settings.environment.silhouetteCount;
+            settings.environment.cloudCount = parseInt(document.getElementById('set-environment-cloudCount').value) || settings.environment.cloudCount;
+            settings.environment.scrollSpeedRoad = parseFloat(document.getElementById('set-environment-scrollSpeedRoad').value) || settings.environment.scrollSpeedRoad;
+            settings.environment.background = document.getElementById('set-environment-background').value;
+            settings.audio.honkVolume = parseFloat(document.getElementById('set-audio-honkVolume').value) || settings.audio.honkVolume;
+            settings.food.spawnTimerMin = parseFloat(document.getElementById('set-food-spawnTimerMin').value) || settings.food.spawnTimerMin;
+            settings.food.spawnTimerMax = parseFloat(document.getElementById('set-food-spawnTimerMax').value) || settings.food.spawnTimerMax;
+            settings.food.speedMin = parseFloat(document.getElementById('set-food-speedMin').value) || settings.food.speedMin;
+            settings.food.speedMax = parseFloat(document.getElementById('set-food-speedMax').value) || settings.food.speedMax;
+            settings.food.gravityIncrease = parseFloat(document.getElementById('set-food-gravityIncrease').value) || settings.food.gravityIncrease;
+            settings.food.size = parseFloat(document.getElementById('set-food-size').value) || settings.food.size;
+        }
+
+        function updatePresetUI() {
+            const select = document.getElementById('preset-select');
+            if (!select) return;
+            select.innerHTML = '<option value="">— select a mode —</option>';
+            presets.forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p.ItemId;
+                opt.textContent = p.PresetName;
+                if (p.ItemId === activePresetId) opt.selected = true;
+                select.appendChild(opt);
+            });
+            const deleteBtn = document.getElementById('preset-delete-btn');
+            if (deleteBtn) deleteBtn.style.display = select.value ? '' : 'none';
+            const modeLabel = document.getElementById('modal-active-mode');
+            if (modeLabel) modeLabel.innerText = activePresetName ? `Mode: ${activePresetName}` : '';
+        }
+
+        function updateSettingsStatusBadge() {
+            const el = document.getElementById('settings-status');
+            if (!el) return;
+            if (activePresetName) {
+                el.innerText = `✓ Mode: ${activePresetName}`;
+                el.style.color = '#4CAF50';
+            }
+        }
+
+        function loadSelectedPreset() {
+            const select = document.getElementById('preset-select');
+            const preset = presets.find(p => p.ItemId === select.value);
+            if (!preset) return;
+            applyPreset(preset);
+            const statusEl = document.getElementById('preset-status');
+            statusEl.innerText = `✓ Mode "${preset.PresetName}" applied`;
+            statusEl.style.color = '#4CAF50';
+            document.getElementById('preset-delete-btn').style.display = '';
+            document.getElementById('modal-active-mode').innerText = `Mode: ${preset.PresetName}`;
+        }
+
+        async function saveCurrentAsPreset() {
+            const nameInput = document.getElementById('preset-name-input');
+            const name = nameInput.value.trim();
+            const statusEl = document.getElementById('preset-status');
+            if (!name) {
+                statusEl.innerText = 'Enter a mode name first';
+                statusEl.style.color = '#f44336';
+                return;
+            }
+            readSettingsFromUI();
+            statusEl.innerText = 'Saving…';
+            statusEl.style.color = '#888';
+            const existing = presets.find(p => p.PresetName.toLowerCase() === name.toLowerCase());
+            try {
+                if (existing) {
+                    await gatewayRequest(
+                        `mutation($input: HonkGamePresetUpdateInput!) { updateHonkGamePreset(input: $input) { acknowledged } }`,
+                        { input: { Filter: JSON.stringify({ _id: existing.ItemId }), SettingsJson: JSON.stringify(settings) } }
+                    );
+                    existing.SettingsJson = JSON.stringify(settings);
+                    activePresetId = existing.ItemId;
+                } else {
+                    const d = await gatewayRequest(
+                        `mutation($input: HonkGamePresetInsertInput!) { insertHonkGamePreset(input: $input) { itemId } }`,
+                        { input: { PresetName: name, SettingsJson: JSON.stringify(settings), ...(authState.isLoggedIn && authState.user?.sub ? { UserId: authState.user.sub } : {}) } }
+                    );
+                    const newP = { ItemId: d.insertHonkGamePreset.itemId, PresetName: name, SettingsJson: JSON.stringify(settings) };
+                    presets.push(newP);
+                    activePresetId = newP.ItemId;
+                }
+                activePresetName = name;
+                localStorage.setItem('honk_preset_id',   activePresetId);
+                localStorage.setItem('honk_preset_name', activePresetName);
+                nameInput.value = '';
+                updatePresetUI();
+                document.getElementById('preset-select').value = activePresetId;
+                document.getElementById('preset-delete-btn').style.display = '';
+                statusEl.innerText = `✓ Mode "${name}" saved`;
+                statusEl.style.color = '#4CAF50';
+                updateSettingsStatusBadge();
+            } catch(e) {
+                statusEl.innerText = 'Save failed: ' + e.message;
+                statusEl.style.color = '#f44336';
+            }
+        }
+
+        async function deleteSelectedPreset() {
+            const select = document.getElementById('preset-select');
+            const preset = presets.find(p => p.ItemId === select.value);
+            if (!preset || !confirm(`Delete mode "${preset.PresetName}"?`)) return;
+            const statusEl = document.getElementById('preset-status');
+            statusEl.innerText = 'Deleting…';
+            try {
+                const filter = JSON.stringify({ _id: preset.ItemId });
+                await gatewayRequest(
+                    `mutation { deleteHonkGamePreset(filter: ${JSON.stringify(filter)}) { acknowledged } }`
+                );
+                presets = presets.filter(p => p.ItemId !== preset.ItemId);
+                if (activePresetId === preset.ItemId) {
+                    activePresetId = null; activePresetName = null;
+                    localStorage.removeItem('honk_preset_id');
+                    localStorage.removeItem('honk_preset_name');
+                }
+                updatePresetUI();
+                statusEl.innerText = `✓ Mode "${preset.PresetName}" deleted`;
+                statusEl.style.color = '#4CAF50';
+                updateSettingsStatusBadge();
+            } catch(e) {
+                statusEl.innerText = 'Delete failed: ' + e.message;
+                statusEl.style.color = '#f44336';
+            }
+        }
+
         // Audio Context
         let audioCtx;
         function initAudio() {
@@ -1290,6 +1493,20 @@
             endpoint: 'https://api.seliseblocks.com/uds/v1/dsjogn/gateway',
             key: '0E123141586144C6976FF44228A71D20'
         };
+
+        // Generic DataGateway helper
+        async function gatewayRequest(query, variables) {
+            const body = variables ? { query, variables } : { query };
+            const resp = await fetch(BLOCKS_API.endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'x-blocks-key': BLOCKS_API.key },
+                referrerPolicy: 'no-referrer',
+                body: JSON.stringify(body)
+            });
+            const result = await resp.json();
+            if (result.errors) throw new Error(result.errors[0].message);
+            return result.data;
+        }
 
         // Blocks IDP API Configuration (Production-grade)
         // Docs: https://api.seliseblocks.com/idp/v1/swagger/index.html
@@ -1987,6 +2204,7 @@
             syncSettingsToUI(); // Initial defaults
             await loadSettings();
             syncSettingsToUI(); // After JSON load
+            loadPresets();     // Load cloud modes, apply last active
             initAuthState(); // Initialize auth from localStorage
             resize();
             draw();
@@ -2039,6 +2257,7 @@
 
         function openSettings() {
             syncSettingsToUI();
+            updatePresetUI();
             settingsModal.classList.remove('hidden');
         }
 
@@ -2049,37 +2268,7 @@
         function saveSettings() {
             try {
                 console.log('Saving settings...');
-                settings.bird.speed = parseFloat(document.getElementById('set-bird-speed').value) || settings.bird.speed;
-                settings.bird.margin = parseFloat(document.getElementById('set-bird-margin').value) || settings.bird.margin;
-                settings.traffic.lanes = parseInt(document.getElementById('set-traffic-lanes').value) || settings.traffic.lanes;
-                settings.traffic.laneHeight = parseFloat(document.getElementById('set-traffic-laneHeight').value) || settings.traffic.laneHeight;
-                settings.traffic.baseSpeedMin = parseFloat(document.getElementById('set-traffic-baseSpeedMin').value) || settings.traffic.baseSpeedMin;
-                settings.traffic.baseSpeedMax = parseFloat(document.getElementById('set-traffic-baseSpeedMax').value) || settings.traffic.baseSpeedMax;
-                settings.traffic.spawnTimerInitial = parseFloat(document.getElementById('set-traffic-spawnTimerInitial').value) || settings.traffic.spawnTimerInitial;
-                settings.traffic.spawnTimerMin = parseFloat(document.getElementById('set-traffic-spawnTimerMin').value) || settings.traffic.spawnTimerMin;
-                settings.traffic.difficultyInterval = parseFloat(document.getElementById('set-traffic-difficultyInterval').value) || settings.traffic.difficultyInterval;
-                settings.traffic.difficultySpawnReduction = parseFloat(document.getElementById('set-traffic-difficultySpawnReduction').value) || settings.traffic.difficultySpawnReduction;
-                settings.physics.poopGravity = parseFloat(document.getElementById('set-physics-poopGravity').value) || settings.physics.poopGravity;
-                settings.physics.poopInitialVy = parseFloat(document.getElementById('set-physics-poopInitialVy').value) || settings.physics.poopInitialVy;
-                settings.gameplay.noiseMax = parseFloat(document.getElementById('set-gameplay-noiseMax').value) || settings.gameplay.noiseMax;
-                settings.gameplay.noiseDecay = parseFloat(document.getElementById('set-gameplay-noiseDecay').value) || settings.gameplay.noiseDecay;
-                settings.gameplay.noiseIncrease = parseFloat(document.getElementById('set-gameplay-noiseIncrease').value) || settings.gameplay.noiseIncrease;
-                settings.environment.treeCount = parseInt(document.getElementById('set-environment-treeCount').value) || settings.environment.treeCount;
-                settings.environment.shopCount = parseInt(document.getElementById('set-environment-shopCount').value) || settings.environment.shopCount;
-                settings.environment.commercialCount = parseInt(document.getElementById('set-environment-commercialCount').value) || settings.environment.commercialCount;
-                settings.environment.silhouetteCount = parseInt(document.getElementById('set-environment-silhouetteCount').value) || settings.environment.silhouetteCount;
-                settings.environment.cloudCount = parseInt(document.getElementById('set-environment-cloudCount').value) || settings.environment.cloudCount;
-                settings.environment.scrollSpeedRoad = parseFloat(document.getElementById('set-environment-scrollSpeedRoad').value) || settings.environment.scrollSpeedRoad;
-                settings.environment.background = document.getElementById('set-environment-background').value;
-                settings.audio.honkVolume = parseFloat(document.getElementById('set-audio-honkVolume').value) || settings.audio.honkVolume;
-
-                settings.food.spawnTimerMin = parseFloat(document.getElementById('set-food-spawnTimerMin').value) || settings.food.spawnTimerMin;
-                settings.food.spawnTimerMax = parseFloat(document.getElementById('set-food-spawnTimerMax').value) || settings.food.spawnTimerMax;
-                settings.food.speedMin = parseFloat(document.getElementById('set-food-speedMin').value) || settings.food.speedMin;
-                settings.food.speedMax = parseFloat(document.getElementById('set-food-speedMax').value) || settings.food.speedMax;
-                settings.food.gravityIncrease = parseFloat(document.getElementById('set-food-gravityIncrease').value) || settings.food.gravityIncrease;
-                settings.food.size = parseFloat(document.getElementById('set-food-size').value) || settings.food.size;
-
+                readSettingsFromUI();
                 console.log('Settings updated successfully');
 
                 // Re-init environmental elements to reflect changes
