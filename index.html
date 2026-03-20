@@ -1287,8 +1287,9 @@
 
         // Leaderboard API Configuration
         const BLOCKS_API = {
-            endpoint: 'https://api.seliseblocks.com/data/v1/gateway',
-            key: '0E123141586144C6976FF44228A71D20'
+            endpoint: 'https://api.seliseblocks.com/uds/v1/dsjogn/gateway',
+            key: '0E123141586144C6976FF44228A71D20',
+            dataKeyHeader: 'x-blocks-data-key'
         };
 
         // Blocks IDP API Configuration (Production-grade)
@@ -2260,7 +2261,7 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'x-blocks-key': BLOCKS_API.key
+                        [BLOCKS_API.dataKeyHeader]: BLOCKS_API.key
                     },
                     body: JSON.stringify({ query })
                 });
@@ -2349,7 +2350,7 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'x-blocks-key': BLOCKS_API.key
+                        [BLOCKS_API.dataKeyHeader]: BLOCKS_API.key
                     },
                     body: JSON.stringify({ query: mutation, variables })
                 });
@@ -2395,7 +2396,7 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'x-blocks-key': BLOCKS_API.key
+                        [BLOCKS_API.dataKeyHeader]: BLOCKS_API.key
                     },
                     body: JSON.stringify({ query })
                 });
