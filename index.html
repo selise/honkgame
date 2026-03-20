@@ -1419,11 +1419,7 @@
             if (!authState.isLoggedIn || !authState.user) return false;
             const r = authState.user.roles || authState.user.role || '';
             const roleStr = Array.isArray(r) ? r.join(',') : String(r);
-            console.log('[isGameAdmin] user object:', JSON.stringify(authState.user));
-            console.log('[isGameAdmin] roleStr:', roleStr);
-            const result = ADMIN_ROLES.some(ar => roleStr.toLowerCase().includes(ar));
-            console.log('[isGameAdmin] result:', result);
-            return result;
+            return ADMIN_ROLES.some(ar => roleStr.toLowerCase().includes(ar));
         }
 
         let gameLevels = [];
@@ -1852,9 +1848,6 @@
                 const roles = Array.isArray(rolesData?.data)
                     ? rolesData.data.map(r => r.slug || r.name).join(',')
                     : '';
-                console.log('[fetchUserInfo] GetUserInfo response:', JSON.stringify(userInfo));
-                console.log('[fetchUserInfo] GetUserRoles status:', rolesResp.status, 'data:', JSON.stringify(rolesData));
-                console.log('[fetchUserInfo] roles:', roles);
                 if (!userInfo && !rolesData) return null;
                 return { ...(userInfo || {}), roles };
             } catch (e) {
@@ -2043,7 +2036,6 @@
                     // Login successful — got JWT tokens
                     const userInfo = await fetchUserInfo(result.access_token);
                     const jwtPayload = parseJwt(result.access_token);
-                    console.log('[login] full JWT payload:', JSON.stringify(jwtPayload));
 
                     authState = {
                         isLoggedIn: true,
