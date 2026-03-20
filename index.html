@@ -1836,17 +1836,21 @@
         // Fetch user info from IDP using access token
         async function fetchUserInfo(accessToken) {
             try {
-                const response = await fetch(`${IDP_API.baseUrl}/Authentication/GetUserInfo`, {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${accessToken}`,
-                        'x-blocks-key': IDP_API.key
-                    }
-                });
-                if (response.ok) {
-                    return await response.json();
-                }
-                return null;
+                const headers = {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'x-blocks-key': IDP_API.key
+                };
+                const [infoResp, rolesResp] = await Promise.all([
+                    fetch(`${IDP_API.baseUrl}/Authentication/GetUserInfo`, { method: 'GET', headers }),
+                    fetch(`${IDP_API.baseUrl}/Iam/GetAccountRoles`, { method: 'GET', headers })
+                ]);
+                const userInfo = infoResp.ok ? await infoResp.json() : null;
+                const rolesData = rolesResp.ok ? await rolesResp.json() : null;
+                const roles = Array.isArray(rolesData?.data)
+                    ? rolesData.data.map(r => r.slug || r.name).join(',')
+                    : '';
+                if (!userInfo && !roles) return null;
+                return { ...(userInfo || {}), roles };
             } catch (e) {
                 console.warn('Failed to fetch user info:', e);
                 return null;
