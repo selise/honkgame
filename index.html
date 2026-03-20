@@ -1419,7 +1419,11 @@
             if (!authState.isLoggedIn || !authState.user) return false;
             const r = authState.user.roles || authState.user.role || '';
             const roleStr = Array.isArray(r) ? r.join(',') : String(r);
-            return ADMIN_ROLES.some(ar => roleStr.toLowerCase().includes(ar));
+            console.log('[isGameAdmin] user object:', JSON.stringify(authState.user));
+            console.log('[isGameAdmin] roleStr:', roleStr);
+            const result = ADMIN_ROLES.some(ar => roleStr.toLowerCase().includes(ar));
+            console.log('[isGameAdmin] result:', result);
+            return result;
         }
 
         let gameLevels = [];
@@ -1894,9 +1898,14 @@
                         const tokenResult = await refreshAccessToken(parsed.refreshToken);
                         if (tokenResult && tokenResult.access_token) {
                             const userInfo = await fetchUserInfo(tokenResult.access_token);
+                            const jwtPayload = parseJwt(tokenResult.access_token);
                             authState = {
                                 isLoggedIn: true,
-                                user: userInfo || parsed.user,
+                                user: {
+                                    ...(parsed.user || {}),
+                                    ...(userInfo || {}),
+                                    roles: userInfo?.roles || userInfo?.role || jwtPayload?.role || jwtPayload?.roles || parsed.user?.roles || ''
+                                },
                                 accessToken: tokenResult.access_token,
                                 refreshToken: tokenResult.refresh_token || parsed.refreshToken
                             };
@@ -2027,10 +2036,13 @@
 
                     authState = {
                         isLoggedIn: true,
-                        user: userInfo || {
+                        user: {
                             email: jwtPayload?.email || email,
                             userName: jwtPayload?.preferred_username || jwtPayload?.name || email.split('@')[0],
-                            sub: jwtPayload?.sub
+                            sub: jwtPayload?.sub,
+                            // Merge userInfo on top, then ensure roles come from JWT if not in userInfo
+                            ...(userInfo || {}),
+                            roles: userInfo?.roles || userInfo?.role || jwtPayload?.role || jwtPayload?.roles || ''
                         },
                         accessToken: result.access_token,
                         refreshToken: result.refresh_token
