@@ -1501,6 +1501,7 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'x-blocks-key': BLOCKS_API.key },
                 referrerPolicy: 'no-referrer',
+                credentials: 'omit', // never send auth cookies — DataGateway uses x-blocks-key only
                 body: JSON.stringify(body)
             });
             const result = await resp.json();
@@ -2452,6 +2453,7 @@
                         'x-blocks-key': BLOCKS_API.key
                     },
                     referrerPolicy: 'no-referrer',
+                    credentials: 'omit',
                     body: JSON.stringify({ query })
                 });
 
@@ -2542,6 +2544,7 @@
                         'x-blocks-key': BLOCKS_API.key
                     },
                     referrerPolicy: 'no-referrer',
+                    credentials: 'omit',
                     body: JSON.stringify({ query: mutation, variables })
                 });
 
@@ -2589,6 +2592,7 @@
                         'x-blocks-key': BLOCKS_API.key
                     },
                     referrerPolicy: 'no-referrer',
+                    credentials: 'omit',
                     body: JSON.stringify({ query })
                 });
 
