@@ -949,6 +949,16 @@
                     <label for="register-email">Email</label>
                     <input type="email" id="register-email" class="auth-input" placeholder="your@email.com" required>
                 </div>
+                <div class="auth-input-group">
+                    <label>Captcha</label>
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                        <div id="captcha-image-container" style="flex: 1; background: #1a1a2e; border-radius: 8px; min-height: 60px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                            <span id="captcha-loading" style="color: #888; font-size: 0.8rem;">Loading...</span>
+                        </div>
+                        <button type="button" onclick="loadCaptcha()" style="background: none; border: 1px solid #444; color: #aaa; border-radius: 6px; padding: 6px 10px; cursor: pointer; font-size: 1rem;" title="Refresh captcha">&#x21BB;</button>
+                    </div>
+                    <input type="text" id="register-captcha" class="auth-input" placeholder="Enter captcha text" required autocomplete="off">
+                </div>
                 <div id="register-error" class="auth-error"></div>
                 <div id="register-success" class="auth-success"></div>
                 <button type="submit" id="register-submit" class="auth-btn">Send Invitation</button>
@@ -1301,6 +1311,9 @@
             key: '0E123141586144C6976FF44228A71D20'
         };
 
+        const CAPTCHA_CONFIG_NAME = 'Signup';
+        let captchaItemId = null;
+
         // Auth State
         let authState = {
             isLoggedIn: false,
@@ -1523,6 +1536,7 @@
                 registerForm.classList.remove('hidden');
                 loginForm.classList.add('hidden');
                 document.getElementById('register-email').focus();
+                loadCaptcha();
             }
             // Clear errors
             document.getElementById('login-error').textContent = '';
@@ -1691,10 +1705,48 @@
             return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
         }
 
+        // Load captcha challenge from Blocks IDP
+        async function loadCaptcha() {
+            const container = document.getElementById('captcha-image-container');
+            const loading = document.getElementById('captcha-loading');
+            captchaItemId = null;
+            container.innerHTML = '<span id="captcha-loading" style="color: #888; font-size: 0.8rem;">Loading...</span>';
+
+            try {
+                const response = await fetch(`${IDP_API.baseUrl}/Captcha/Create`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-blocks-key': IDP_API.key
+                    },
+                    body: JSON.stringify({ configurationName: CAPTCHA_CONFIG_NAME })
+                });
+
+                const result = await response.json();
+                if (result.isSuccess && result.captcha) {
+                    captchaItemId = result.itemId;
+                    const captchaData = result.captcha;
+                    if (captchaData.trimStart().startsWith('<svg')) {
+                        container.innerHTML = captchaData;
+                        const svg = container.querySelector('svg');
+                        if (svg) { svg.style.width = '100%'; svg.style.height = 'auto'; }
+                    } else {
+                        container.innerHTML = `<img src="data:image/png;base64,${captchaData}" style="max-width:100%; height:60px; display:block;">`;
+                    }
+                } else {
+                    container.innerHTML = '<span style="color: #f66; font-size: 0.8rem;">Failed to load captcha</span>';
+                }
+            } catch (e) {
+                console.error('Captcha load error:', e);
+                container.innerHTML = '<span style="color: #f66; font-size: 0.8rem;">Failed to load captcha</span>';
+            }
+        }
+
         // Handle signup via Blocks Identifier API - sends an invitation link to the user's email
         async function handleRegister(event) {
             event.preventDefault();
             const email = document.getElementById('register-email').value.trim().toLowerCase();
+            const captchaAnswer = document.getElementById('register-captcha').value.trim();
             const errorEl = document.getElementById('register-error');
             const successEl = document.getElementById('register-success');
             const submitBtn = document.getElementById('register-submit');
@@ -1702,11 +1754,39 @@
             errorEl.textContent = '';
             successEl.textContent = '';
 
+            if (!captchaItemId) {
+                errorEl.textContent = 'Captcha not loaded. Please refresh.';
+                return;
+            }
+
             submitBtn.disabled = true;
             submitBtn.textContent = 'Sending...';
 
             try {
-                const response = await fetch(`${IDENTIFIER_API.baseUrl}/People/Signup`, {
+                // Step 1: Submit captcha answer
+                const captchaResponse = await fetch(`${IDP_API.baseUrl}/Captcha/Submit`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-blocks-key': IDP_API.key
+                    },
+                    body: JSON.stringify({
+                        itemId: captchaItemId,
+                        answer: captchaAnswer,
+                        configurationName: CAPTCHA_CONFIG_NAME
+                    })
+                });
+
+                const captchaResult = await captchaResponse.json();
+                if (!captchaResult.isSuccess) {
+                    errorEl.textContent = 'Incorrect captcha. Please try again.';
+                    loadCaptcha();
+                    document.getElementById('register-captcha').value = '';
+                    return;
+                }
+
+                // Step 2: Signup with verified captcha token
+                const signupResponse = await fetch(`${IDENTIFIER_API.baseUrl}/People/Signup`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1715,19 +1795,21 @@
                     credentials: 'include',
                     body: JSON.stringify({
                         email: email,
-                        captchaCode: null
+                        captchaCode: captchaResult.itemId
                     })
                 });
 
-                if (response.ok) {
+                if (signupResponse.ok) {
                     successEl.textContent = 'Invitation sent! Check your email to activate your account.';
                     document.getElementById('register-form').reset();
+                    loadCaptcha();
                 } else {
-                    const text = await response.text().catch(() => '');
-                    console.error('Signup failed:', response.status, text);
+                    const text = await signupResponse.text().catch(() => '');
+                    console.error('Signup failed:', signupResponse.status, text);
                     let message = 'Signup failed. Please try again.';
                     try { const j = JSON.parse(text); message = j.message || j.title || message; } catch {}
                     errorEl.textContent = message;
+                    loadCaptcha();
                 }
             } catch (error) {
                 console.error('Signup error:', error);
