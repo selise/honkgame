@@ -1913,9 +1913,11 @@
         // Generic DataGateway helper
         async function gatewayRequest(query, variables) {
             const body = variables ? { query, variables } : { query };
+            const headers = { 'Content-Type': 'application/json', 'x-blocks-key': BLOCKS_API.key };
+            if (authState.accessToken) headers['Authorization'] = `Bearer ${authState.accessToken}`;
             const resp = await fetch(BLOCKS_API.endpoint, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'x-blocks-key': BLOCKS_API.key },
+                headers,
                 referrerPolicy: 'no-referrer',
                 body: JSON.stringify(body)
             });
