@@ -3011,20 +3011,10 @@
             };
 
             try {
-                const response = await fetch(BLOCKS_API.endpoint, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'x-blocks-key': BLOCKS_API.key
-                    },
-                    referrerPolicy: 'no-referrer',
-                    body: JSON.stringify({ query: mutation, variables })
-                });
+                const result = await gatewayRequest(mutation, variables);
 
-                const result = await response.json();
-
-                if (result.data && result.data.insertHonkGameLeaderboard) {
-                    lastSubmittedScore = result.data.insertHonkGameLeaderboard.itemId;
+                if (result && result.insertHonkGameLeaderboard) {
+                    lastSubmittedScore = result.insertHonkGameLeaderboard.itemId;
                     console.log('Score submitted successfully:', lastSubmittedScore);
 
                     // Check if player made it to top 10
