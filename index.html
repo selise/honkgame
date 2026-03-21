@@ -1919,6 +1919,7 @@
             const resp = await fetch(BLOCKS_API.endpoint, {
                 method: 'POST',
                 headers,
+                credentials: 'omit',
                 referrerPolicy: 'no-referrer',
                 body: JSON.stringify(body)
             });
