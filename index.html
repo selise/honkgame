@@ -2862,14 +2862,7 @@
         }
 
         function renderLeaderboardTabs() {
-            const tabsEl = document.getElementById('leaderboard-level-tabs');
-            if (!tabsEl) return;
-            const tabs = [{ id: 'all', label: '🌍 All Levels' }];
-            gameLevels.forEach(l => tabs.push({ id: l.LevelName, label: `${l.Emoji || ''} ${l.LevelName}` }));
-            tabsEl.innerHTML = tabs.map(t => `
-                <button class="leaderboard-tab ${leaderboardLevelFilter === t.id ? 'active' : ''}"
-                        onclick="setLeaderboardFilter('${escapeHtml(t.id)}')">${t.label}</button>
-            `).join('');
+            // Level filter tabs disabled until LevelName is added to leaderboard schema via Blocks Cloud UI
         }
 
         function setLeaderboardFilter(levelName) {
@@ -2882,14 +2875,11 @@
             leaderboardContent.innerHTML = '<div class="leaderboard-loading">Loading...</div>';
             renderLeaderboardTabs();
 
-            const filterObj = leaderboardLevelFilter === 'all' ? {} : { LevelName: leaderboardLevelFilter };
-            const filterJson = JSON.stringify(filterObj).replace(/"/g, '\\"');
-
             const query = `
                 query {
                     getHonkGameLeaderboards(
                         input: {
-                            filter: "${filterJson}",
+                            filter: "{}",
                             sort: "{\\\"Score\\\": -1}",
                             pageNo: 1,
                             pageSize: 10
@@ -2902,7 +2892,6 @@
                             Score
                             TimeSurvived
                             Level
-                            LevelName
                             UserId
                             CreatedDate
                         }
@@ -2911,20 +2900,9 @@
             `;
 
             try {
-                const response = await fetch(BLOCKS_API.endpoint, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'x-blocks-key': BLOCKS_API.key
-                    },
-                    referrerPolicy: 'no-referrer',
-                    body: JSON.stringify({ query })
-                });
-
-                const result = await response.json();
-
-                if (result.data && result.data.getHonkGameLeaderboards) {
-                    renderLeaderboard(result.data.getHonkGameLeaderboards.items || []);
+                const data = await gatewayRequest(query);
+                if (data && data.getHonkGameLeaderboards) {
+                    renderLeaderboard(data.getHonkGameLeaderboards.items || []);
                 } else {
                     leaderboardContent.innerHTML = '<div class="leaderboard-empty">No scores yet. Be the first!</div>';
                 }
@@ -2951,8 +2929,7 @@
                             <th>Pilot</th>
                             <th>Score</th>
                             <th>Time</th>
-                            <th>Level</th>
-                            <th>Mode</th>
+                            <th>Difficulty</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -2964,13 +2941,6 @@
                                      || entry.ItemId === lastSubmittedScore;
                 const rankClass = rank <= 3 ? `rank-${rank}` : 'rank-other';
                 const rowClass  = isCurrentPlayer ? 'your-score-row' : '';
-                const modeLabel = entry.LevelName
-                    ? `<span style="font-size:0.75rem;opacity:0.8;">${escapeHtml(entry.LevelName)}</span>`
-                    : `<span style="font-size:0.75rem;opacity:0.4;">—</span>`;
-                const date = entry.CreatedDate
-                    ? new Date(entry.CreatedDate).toLocaleDateString(undefined, { month:'short', day:'numeric' })
-                    : '';
-
                 html += `
                     <tr class="${rowClass}">
                         <td><span class="rank-badge ${rankClass}">${rank}</span></td>
@@ -2978,7 +2948,6 @@
                         <td style="color:var(--primary);font-weight:700;">${entry.Score || 0}</td>
                         <td style="opacity:0.8;">${entry.TimeSurvived || 0}s</td>
                         <td style="opacity:0.8;">Lv ${entry.Level || 1}</td>
-                        <td>${modeLabel}</td>
                     </tr>
                 `;
             });
@@ -3007,7 +2976,6 @@
                     CarsSilenced: carsSilenced,
                     PoopsDropped: poopsDropped,
                     Level: difficulty,
-                    LevelName: activeLevelName || '',
                     ...(authState.isLoggedIn && authState.user?.sub ? { UserId: authState.user.sub } : {})
                 }
             };
