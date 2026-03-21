@@ -1749,9 +1749,10 @@
             const existing = gameLevels.find(l => l.LevelName.toLowerCase() === levelName.toLowerCase());
             try {
                 if (existing) {
+                    const updateFilter = JSON.stringify({ _id: existing.ItemId });
                     await gatewayRequest(
-                        `mutation($input: HonkGameLevelUpdateInput!) { updateHonkGameLevel(input: $input) { acknowledged } }`,
-                        { input: { ItemId: existing.ItemId, LevelName: levelName, LevelNumber: levelNumber, Description: description, UnlockScore: unlockScore, Emoji: emoji, Color: color, IsActive: true, SettingsJson: JSON.stringify(settings) } }
+                        `mutation($input: HonkGameLevelUpdateInput!) { updateHonkGameLevel(filter: ${JSON.stringify(updateFilter)}, input: $input) { acknowledged } }`,
+                        { input: { LevelName: levelName, LevelNumber: levelNumber, Description: description, UnlockScore: unlockScore, Emoji: emoji, Color: color, IsActive: true, SettingsJson: JSON.stringify(settings) } }
                     );
                     Object.assign(existing, { LevelNumber: levelNumber, Description: description, UnlockScore: unlockScore, Emoji: emoji, Color: color, SettingsJson: JSON.stringify(settings) });
                     activeLevelId = existing.ItemId;
