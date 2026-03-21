@@ -1751,7 +1751,7 @@
                 if (existing) {
                     await gatewayRequest(
                         `mutation($input: HonkGameLevelUpdateInput!) { updateHonkGameLevel(input: $input) { acknowledged } }`,
-                        { input: { Filter: JSON.stringify({ _id: existing.ItemId }), LevelNumber: levelNumber, Description: description, UnlockScore: unlockScore, Emoji: emoji, Color: color, IsActive: true, SettingsJson: JSON.stringify(settings) } }
+                        { input: { ItemId: existing.ItemId, LevelName: levelName, LevelNumber: levelNumber, Description: description, UnlockScore: unlockScore, Emoji: emoji, Color: color, IsActive: true, SettingsJson: JSON.stringify(settings) } }
                     );
                     Object.assign(existing, { LevelNumber: levelNumber, Description: description, UnlockScore: unlockScore, Emoji: emoji, Color: color, SettingsJson: JSON.stringify(settings) });
                     activeLevelId = existing.ItemId;
